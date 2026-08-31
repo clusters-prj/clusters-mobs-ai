@@ -19,10 +19,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class CustomMobCommand implements CommandExecutor, TabCompleter {
 
-    private static final String PERMISSION = "custommobs.command";
+    /** spawn/reload/list/cleanup など、サーバー管理者向けのサブコマンドに要求する権限 */
+    private static final String ADMIN_PERMISSION = "custommobs.command";
+    /**
+     * tame/release/build/mypets/claim など、プレイヤーが自分のペットを扱うためのサブコマンドに
+     * 要求する権限。これを{@code ADMIN_PERMISSION}と分けているのは、通常プレイヤーにペット機能
+     * だけ渡せるようにするため(admin権限まで渡すと他人のペットの所有者チェックまで
+     * 素通りしてしまう。{@link com.kaguya.custommobs.pet.PetManager}参照)。
+     */
+    private static final String PET_PERMISSION = "custommobs.pet";
+    private static final Set<String> ADMIN_SUB_COMMANDS = Set.of("spawn", "reload", "list", "cleanup");
     private static final List<String> SUB_COMMANDS =
             List.of("spawn", "reload", "list", "cleanup", "tame", "release", "build", "mypets", "claim");
 
@@ -41,16 +51,19 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission(PERMISSION)) {
-            sender.sendMessage("§cこのコマンドを実行する権限がありません");
-            return true;
-        }
         if (args.length == 0) {
             sendUsage(sender);
             return true;
         }
 
-        switch (args[0].toLowerCase(Locale.ROOT)) {
+        String sub = args[0].toLowerCase(Locale.ROOT);
+        boolean adminSub = ADMIN_SUB_COMMANDS.contains(sub);
+        if (adminSub ? !sender.hasPermission(ADMIN_PERMISSION) : !hasPetAccess(sender)) {
+            sender.sendMessage("§cこのコマンドを実行する権限がありません");
+            return true;
+        }
+
+        switch (sub) {
             case "spawn" -> handleSpawn(sender, args);
             case "reload" -> {
                 mobManager.reloadDefinitions();
@@ -225,6 +238,11 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
         petManager.claim(player);
     }
 
+    /** プレイヤー向けペット機能(tame/release/build/mypets/claim)を使える権限があるか */
+    private boolean hasPetAccess(CommandSender sender) {
+        return sender.hasPermission(PET_PERMISSION) || sender.hasPermission(ADMIN_PERMISSION);
+    }
+
     private Player requirePlayer(CommandSender sender) {
         if (sender instanceof Player player) return player;
         sender.sendMessage("§cプレイヤーのみ実行できます");
@@ -271,18 +289,26 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (!sender.hasPermission(PERMISSION)) return Collections.emptyList();
+        boolean admin = sender.hasPermission(ADMIN_PERMISSION);
+        boolean pet = admin || hasPetAccess(sender);
+        if (!admin && !pet) return Collections.emptyList();
 
         if (args.length == 1) {
-            return filterPrefix(SUB_COMMANDS, args[0]);
+            List<String> visible = new ArrayList<>();
+            for (String candidate : SUB_COMMANDS) {
+                if (ADMIN_SUB_COMMANDS.contains(candidate) ? admin : pet) {
+                    visible.add(candidate);
+                }
+            }
+            return filterPrefix(visible, args[0]);
         }
-        if (args.length == 2) {
+        if (args.length == 2 && admin) {
             String sub = args[0].toLowerCase(Locale.ROOT);
             if (sub.equals("spawn") || sub.equals("cleanup")) {
                 return filterPrefix(new ArrayList<>(mobManager.getAllDefinitions().keySet()), args[1]);
             }
         }
-        if (args.length == 6 && args[0].equalsIgnoreCase("spawn")) {
+        if (args.length == 6 && admin && args[0].equalsIgnoreCase("spawn")) {
             List<String> worlds = new ArrayList<>();
             for (World world : Bukkit.getWorlds()) {
                 worlds.add(world.getName());

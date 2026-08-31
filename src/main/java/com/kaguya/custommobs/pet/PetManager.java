@@ -25,6 +25,16 @@ import java.util.logging.Level;
  */
 public class PetManager implements BuildProgressListener {
 
+    /**
+     * 所有者チェックを飛ばして他人のペットも操作できる管理者用権限。
+     * <p>
+     * 以前は{@code custommobs.command}(=/cmob全体を使える権限)を流用していたが、
+     * これはテイム/建築などプレイヤー向け機能の実行権限も兼ねていたため、通常プレイヤーに
+     * ペット機能だけ使わせるつもりで{@code custommobs.command}を渡すと、他人のペットの
+     * 建築・解放まで乗っ取れてしまっていた。専用の権限に分離し、デフォルトはop限定のまま。
+     */
+    private static final String ADMIN_OVERRIDE_PERMISSION = "custommobs.pet.admin";
+
     private final JavaPlugin plugin;
     private final MobManager mobManager;
     private final PetDatabase database;
@@ -45,7 +55,7 @@ public class PetManager implements BuildProgressListener {
      * 原点はプレイヤーの現在地。所有権チェックはDB問い合わせなので非同期で行う。
      */
     public void assignBuild(Player player, CustomMobInstance target, int listingId) {
-        if (!target.isOwnedBy(player.getUniqueId()) && !player.hasPermission("custommobs.command")) {
+        if (!target.isOwnedBy(player.getUniqueId()) && !player.hasPermission(ADMIN_OVERRIDE_PERMISSION)) {
             player.sendMessage("§c自分のペットではありません");
             return;
         }
@@ -275,7 +285,7 @@ public class PetManager implements BuildProgressListener {
     }
 
     public void release(Player player, CustomMobInstance target) {
-        if (!target.isOwnedBy(player.getUniqueId()) && !player.hasPermission("custommobs.command")) {
+        if (!target.isOwnedBy(player.getUniqueId()) && !player.hasPermission(ADMIN_OVERRIDE_PERMISSION)) {
             player.sendMessage("§c自分のペットではありません");
             return;
         }

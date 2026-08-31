@@ -12,9 +12,16 @@ commands:
   cmob:
     description: Custom Mob管理コマンド
     usage: /cmob spawn <mobId> [x y z] [world] | /cmob reload | /cmob list | /cmob cleanup [mobId] | /cmob tame | /cmob release | /cmob build <listingId> | /cmob mypets | /cmob claim
-    permission: custommobs.command
+    # ここでpermissionを指定すると、custommobs.petしか持たない一般プレイヤーがBukkit側の
+    # 事前チェックで弾かれてしまう(サブコマンドごとの権限はCustomMobCommand側で判定している)。
 
 permissions:
   custommobs.command:
-    description: /cmob コマンドを使用できる
+    description: /cmob spawn・reload・list・cleanup などサーバー管理者向けサブコマンドを使用できる
+    default: op
+  custommobs.pet:
+    description: /cmob tame・release・build・mypets・claim などペット機能を使用できる
+    default: true
+  custommobs.pet.admin:
+    description: 所有者チェックを無視して他人のペットもrelease/buildできる(サポート対応用)
     default: op

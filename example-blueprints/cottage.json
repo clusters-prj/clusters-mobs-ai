@@ -1,0 +1,1529 @@
+{
+  "name": "cottage",
+  "blocks": [
+    {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 1,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 2,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 3,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 4,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 5,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 6,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "z": 0,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "z": 1,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "z": 2,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "z": 3,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "z": 4,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "z": 5,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "z": 6,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 2,
+      "y": 0,
+      "z": 0,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 2,
+      "y": 0,
+      "z": 1,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 2,
+      "y": 0,
+      "z": 2,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 2,
+      "y": 0,
+      "z": 3,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 2,
+      "y": 0,
+      "z": 4,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 2,
+      "y": 0,
+      "z": 5,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 2,
+      "y": 0,
+      "z": 6,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 3,
+      "y": 0,
+      "z": 0,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 3,
+      "y": 0,
+      "z": 1,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 3,
+      "y": 0,
+      "z": 2,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 3,
+      "y": 0,
+      "z": 3,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 3,
+      "y": 0,
+      "z": 4,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 3,
+      "y": 0,
+      "z": 5,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 3,
+      "y": 0,
+      "z": 6,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 4,
+      "y": 0,
+      "z": 0,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 4,
+      "y": 0,
+      "z": 1,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 4,
+      "y": 0,
+      "z": 2,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 4,
+      "y": 0,
+      "z": 3,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 4,
+      "y": 0,
+      "z": 4,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 4,
+      "y": 0,
+      "z": 5,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 4,
+      "y": 0,
+      "z": 6,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 5,
+      "y": 0,
+      "z": 0,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 5,
+      "y": 0,
+      "z": 1,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 5,
+      "y": 0,
+      "z": 2,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 5,
+      "y": 0,
+      "z": 3,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 5,
+      "y": 0,
+      "z": 4,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 5,
+      "y": 0,
+      "z": 5,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 5,
+      "y": 0,
+      "z": 6,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 6,
+      "y": 0,
+      "z": 0,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 6,
+      "y": 0,
+      "z": 1,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 6,
+      "y": 0,
+      "z": 2,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 6,
+      "y": 0,
+      "z": 3,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 6,
+      "y": 0,
+      "z": 4,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 6,
+      "y": 0,
+      "z": 5,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 6,
+      "y": 0,
+      "z": 6,
+      "material": "OAK_PLANKS"
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 1,
+      "y": 1,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 1,
+      "y": 1,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 2,
+      "y": 1,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 2,
+      "y": 1,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 3,
+      "y": 1,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 4,
+      "y": 1,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 4,
+      "y": 1,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 5,
+      "y": 1,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 5,
+      "y": 1,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 1,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 1,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": 1,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 1,
+      "z": 1,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": 2,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 1,
+      "z": 2,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": 3,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 1,
+      "z": 3,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": 4,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 1,
+      "z": 4,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": 5,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 1,
+      "z": 5,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 2,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 2,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 1,
+      "y": 2,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 1,
+      "y": 2,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 2,
+      "y": 2,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 2,
+      "y": 2,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 3,
+      "y": 2,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 4,
+      "y": 2,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 4,
+      "y": 2,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 5,
+      "y": 2,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 5,
+      "y": 2,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 2,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 2,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 2,
+      "z": 1,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 2,
+      "z": 1,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 2,
+      "z": 2,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 2,
+      "z": 2,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 2,
+      "z": 3,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 2,
+      "z": 3,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 2,
+      "z": 4,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 2,
+      "z": 4,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 2,
+      "z": 5,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 2,
+      "z": 5,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 3,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 3,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 1,
+      "y": 3,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 1,
+      "y": 3,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 2,
+      "y": 3,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 2,
+      "y": 3,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 3,
+      "y": 3,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 3,
+      "y": 3,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 4,
+      "y": 3,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 4,
+      "y": 3,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 5,
+      "y": 3,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 5,
+      "y": 3,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 3,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 3,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 3,
+      "z": 1,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 3,
+      "z": 1,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 3,
+      "z": 2,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 3,
+      "z": 2,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 3,
+      "z": 3,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 3,
+      "z": 3,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 3,
+      "z": 4,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 3,
+      "z": 4,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 3,
+      "z": 5,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 3,
+      "z": 5,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 4,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 4,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 1,
+      "y": 4,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 1,
+      "y": 4,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 2,
+      "y": 4,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 2,
+      "y": 4,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 3,
+      "y": 4,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 3,
+      "y": 4,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 4,
+      "y": 4,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 4,
+      "y": 4,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 5,
+      "y": 4,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 5,
+      "y": 4,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 4,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 4,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 4,
+      "z": 1,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 4,
+      "z": 1,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 4,
+      "z": 2,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 4,
+      "z": 2,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 4,
+      "z": 3,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 4,
+      "z": 3,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 4,
+      "z": 4,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 4,
+      "z": 4,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 4,
+      "z": 5,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 4,
+      "z": 5,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 5,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 5,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 1,
+      "y": 5,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 1,
+      "y": 5,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 2,
+      "y": 5,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 2,
+      "y": 5,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 3,
+      "y": 5,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 3,
+      "y": 5,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 4,
+      "y": 5,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 4,
+      "y": 5,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 5,
+      "y": 5,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 5,
+      "y": 5,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 5,
+      "z": 0,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 5,
+      "z": 6,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 5,
+      "z": 1,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 5,
+      "z": 1,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 5,
+      "z": 2,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 5,
+      "z": 2,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 5,
+      "z": 3,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 5,
+      "z": 3,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 5,
+      "z": 4,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 5,
+      "z": 4,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 5,
+      "z": 5,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 6,
+      "y": 5,
+      "z": 5,
+      "material": "STONE_BRICKS"
+    },
+    {
+      "x": 0,
+      "y": 3,
+      "z": 3,
+      "material": "GLASS_PANE"
+    },
+    {
+      "x": 6,
+      "y": 3,
+      "z": 3,
+      "material": "GLASS_PANE"
+    },
+    {
+      "x": 3,
+      "y": 3,
+      "z": 6,
+      "material": "GLASS_PANE"
+    },
+    {
+      "x": 0,
+      "y": 6,
+      "z": 0,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 0,
+      "y": 6,
+      "z": 1,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 0,
+      "y": 6,
+      "z": 2,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 0,
+      "y": 6,
+      "z": 3,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 0,
+      "y": 6,
+      "z": 4,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 0,
+      "y": 6,
+      "z": 5,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 0,
+      "y": 6,
+      "z": 6,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 1,
+      "y": 6,
+      "z": 0,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 1,
+      "y": 6,
+      "z": 1,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 1,
+      "y": 6,
+      "z": 2,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 1,
+      "y": 6,
+      "z": 3,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 1,
+      "y": 6,
+      "z": 4,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 1,
+      "y": 6,
+      "z": 5,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 1,
+      "y": 6,
+      "z": 6,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 2,
+      "y": 6,
+      "z": 0,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 2,
+      "y": 6,
+      "z": 1,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 2,
+      "y": 6,
+      "z": 2,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 2,
+      "y": 6,
+      "z": 3,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 2,
+      "y": 6,
+      "z": 4,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 2,
+      "y": 6,
+      "z": 5,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 2,
+      "y": 6,
+      "z": 6,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 3,
+      "y": 6,
+      "z": 0,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 3,
+      "y": 6,
+      "z": 1,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 3,
+      "y": 6,
+      "z": 2,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 3,
+      "y": 6,
+      "z": 3,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 3,
+      "y": 6,
+      "z": 4,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 3,
+      "y": 6,
+      "z": 5,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 3,
+      "y": 6,
+      "z": 6,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 4,
+      "y": 6,
+      "z": 0,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 4,
+      "y": 6,
+      "z": 1,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 4,
+      "y": 6,
+      "z": 2,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 4,
+      "y": 6,
+      "z": 3,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 4,
+      "y": 6,
+      "z": 4,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 4,
+      "y": 6,
+      "z": 5,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 4,
+      "y": 6,
+      "z": 6,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 5,
+      "y": 6,
+      "z": 0,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 5,
+      "y": 6,
+      "z": 1,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 5,
+      "y": 6,
+      "z": 2,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 5,
+      "y": 6,
+      "z": 3,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 5,
+      "y": 6,
+      "z": 4,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 5,
+      "y": 6,
+      "z": 5,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 5,
+      "y": 6,
+      "z": 6,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 6,
+      "y": 6,
+      "z": 0,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 6,
+      "y": 6,
+      "z": 1,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 6,
+      "y": 6,
+      "z": 2,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 6,
+      "y": 6,
+      "z": 3,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 6,
+      "y": 6,
+      "z": 4,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 6,
+      "y": 6,
+      "z": 5,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 6,
+      "y": 6,
+      "z": 6,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 1,
+      "y": 7,
+      "z": 1,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 1,
+      "y": 7,
+      "z": 2,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 1,
+      "y": 7,
+      "z": 3,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 1,
+      "y": 7,
+      "z": 4,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 1,
+      "y": 7,
+      "z": 5,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 2,
+      "y": 7,
+      "z": 1,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 2,
+      "y": 7,
+      "z": 2,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 2,
+      "y": 7,
+      "z": 3,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 2,
+      "y": 7,
+      "z": 4,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 2,
+      "y": 7,
+      "z": 5,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 3,
+      "y": 7,
+      "z": 1,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 3,
+      "y": 7,
+      "z": 2,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 3,
+      "y": 7,
+      "z": 3,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 3,
+      "y": 7,
+      "z": 4,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 3,
+      "y": 7,
+      "z": 5,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 4,
+      "y": 7,
+      "z": 1,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 4,
+      "y": 7,
+      "z": 2,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 4,
+      "y": 7,
+      "z": 3,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 4,
+      "y": 7,
+      "z": 4,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 4,
+      "y": 7,
+      "z": 5,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 5,
+      "y": 7,
+      "z": 1,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 5,
+      "y": 7,
+      "z": 2,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 5,
+      "y": 7,
+      "z": 3,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 5,
+      "y": 7,
+      "z": 4,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 5,
+      "y": 7,
+      "z": 5,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 2,
+      "y": 8,
+      "z": 2,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 2,
+      "y": 8,
+      "z": 3,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 2,
+      "y": 8,
+      "z": 4,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 3,
+      "y": 8,
+      "z": 2,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 3,
+      "y": 8,
+      "z": 3,
+      "material": "COBBLESTONE"
+    },
+    {
+      "x": 3,
+      "y": 8,
+      "z": 4,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 4,
+      "y": 8,
+      "z": 2,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 4,
+      "y": 8,
+      "z": 3,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 4,
+      "y": 8,
+      "z": 4,
+      "material": "COBBLESTONE_STAIRS"
+    },
+    {
+      "x": 3,
+      "y": 9,
+      "z": 3,
+      "material": "COBBLESTONE_STAIRS"
+    }
+  ]
+}
