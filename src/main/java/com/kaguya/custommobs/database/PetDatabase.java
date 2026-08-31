@@ -234,15 +234,33 @@ public class PetDatabase {
      *
      * @return JSON文字列とタイトル。所有していない/該当なしの場合は null
      */
+    /**
+     * 所有判定はキャラクター(UUID)単位ではなくWebアカウント単位で行う。
+     * <p>
+     * 1つのWebアカウントにJava/Bedrock複数キャラを{@code account_links}で紐付けられる
+     * (fjewの{@code getOwnedUuids}と同じ考え方)ので、「今操作しているキャラのUUIDと
+     * NFTのowner_uuidが完全一致するか」だけで見ると、別キャラで買った設計図をこちらの
+     * キャラでは使えないことになってしまう。同じWebアカウントに紐付いた別UUID名義の
+     * NFTも所有扱いにする。account_linksに未登録(Web連携していない)キャラは
+     * 従来どおり直接のUUID一致のみで判定する。
+     */
     public BlueprintRow findOwnedBlueprintJson(UUID ownerUuid, int listingId) throws SQLException {
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(
                      "SELECT l.blueprint_json, l.title FROM marketplace_nfts n " +
                      "JOIN marketplace_listings l ON n.listing_id = l.id " +
-                     "WHERE n.owner_uuid = ? AND n.listing_id = ? AND l.item_type = 'blueprint' " +
-                     "LIMIT 1")) {
-            ps.setString(1, ownerUuid.toString());
-            ps.setInt(2, listingId);
+                     "WHERE n.listing_id = ? AND l.item_type = 'blueprint' " +
+                     "AND (" +
+                     "  n.owner_uuid = ? " +
+                     "  OR n.owner_uuid IN (" +
+                     "    SELECT al2.minecraft_uuid FROM account_links al1 " +
+                     "    JOIN account_links al2 ON al2.web_user_id = al1.web_user_id " +
+                     "    WHERE al1.minecraft_uuid = ?" +
+                     "  )" +
+                     ") LIMIT 1")) {
+            ps.setInt(1, listingId);
+            ps.setString(2, ownerUuid.toString());
+            ps.setString(3, ownerUuid.toString());
             try (var rs = ps.executeQuery()) {
                 if (!rs.next()) return null;
                 return new BlueprintRow(rs.getString("blueprint_json"), rs.getString("title"));
