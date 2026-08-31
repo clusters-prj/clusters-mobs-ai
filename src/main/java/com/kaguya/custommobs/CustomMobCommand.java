@@ -50,6 +50,7 @@ public class CustomMobCommand implements CommandExecutor {
             }
             case "reload" -> {
                 mobManager.reloadDefinitions();
+                petManager.syncCatalog();
                 sender.sendMessage("§aMob定義をリロードしました (" + mobManager.getAllDefinitions().size() + "件)");
             }
             case "list" -> sender.sendMessage("§e登録済みMob: " + String.join(", ", mobManager.getAllDefinitions().keySet()));

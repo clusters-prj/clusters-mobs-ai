@@ -3,6 +3,7 @@ package com.kaguya.custommobs.pet;
 import com.kaguya.custommobs.database.PetDatabase;
 import com.kaguya.custommobs.manager.MobManager;
 import com.kaguya.custommobs.model.CustomMobInstance;
+import com.kaguya.custommobs.model.MobDefinition;
 import com.kaguya.custommobs.model.PetConfig;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -132,6 +133,25 @@ public class PetManager {
 
     public boolean isDatabaseReady() {
         return database.isReady();
+    }
+
+    /**
+     * mobs.ymlのpet:セクションをcm_pet_catalogへ反映する。Webダッシュボード(fjew)の
+     * ペットショップページはこのテーブルを見るだけなので、mobs.ymlを常に単一の真実の
+     * ソースに保つため、プラグイン起動時と /cmob reload のたびに(非同期で)upsertする。
+     */
+    public void syncCatalog() {
+        if (!database.isReady()) return;
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            for (MobDefinition def : mobManager.getAllDefinitions().values()) {
+                if (def.getPet() == null) continue;
+                try {
+                    database.upsertCatalogEntry(def.getId(), def.getDisplayName(), def.getPet().getTameCost());
+                } catch (SQLException e) {
+                    plugin.getLogger().log(Level.WARNING, "ペットカタログの同期に失敗しました (" + def.getId() + ")", e);
+                }
+            }
+        });
     }
 
     public void tame(Player player, CustomMobInstance target) {
