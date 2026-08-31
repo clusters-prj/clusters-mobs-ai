@@ -55,6 +55,23 @@
 
     <build>
         <finalName>${project.artifactId}</finalName>
+        <resources>
+            <!-- plugin.yml だけ ${project.version} を埋め込む(CIがpomのversionを差し替えるため) -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>plugin.yml</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>plugin.yml</exclude>
+                </excludes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

@@ -2,9 +2,12 @@ package com.kaguya.custommobs;
 
 import com.kaguya.custommobs.database.PetDatabase;
 import com.kaguya.custommobs.manager.MobDeathListener;
+import com.kaguya.custommobs.manager.MobEntityLoadListener;
 import com.kaguya.custommobs.manager.MobManager;
+import com.kaguya.custommobs.manager.ModelStandGuardListener;
 import com.kaguya.custommobs.pet.BlueprintLoader;
 import com.kaguya.custommobs.pet.PetManager;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class CustomMobsPlugin extends JavaPlugin {
@@ -31,7 +34,21 @@ public class CustomMobsPlugin extends JavaPlugin {
         petManager.syncCatalog();
 
         getServer().getPluginManager().registerEvents(new MobDeathListener(mobManager), this);
-        getCommand("cmob").setExecutor(new CustomMobCommand(mobManager, petManager));
+        getServer().getPluginManager().registerEvents(new MobEntityLoadListener(this, mobManager), this);
+        getServer().getPluginManager().registerEvents(new ModelStandGuardListener(mobManager), this);
+
+        PluginCommand command = getCommand("cmob");
+        if (command != null) {
+            command.setExecutor(new CustomMobCommand(mobManager, petManager));
+        } else {
+            getLogger().warning("plugin.yml に cmob コマンドが定義されていません");
+        }
+
+        // /reload や再有効化のときは、すでにワールドにいるカスタムMobを拾い直す
+        int adopted = mobManager.adoptLoadedEntities();
+        if (adopted > 0) {
+            getLogger().info("既存のカスタムMobを復帰させました: " + adopted + "体");
+        }
 
         // 1tickごとにAI Tick(重くなってきたら2~4tick間引き推奨)
         getServer().getScheduler().runTaskTimer(this, mobManager::tickAll, 1L, 1L);
@@ -43,6 +60,10 @@ public class CustomMobsPlugin extends JavaPlugin {
     public void onDisable() {
         if (petDatabase != null) {
             petDatabase.shutdown();
+        }
+        if (mobManager != null) {
+            // モデル用ArmorStandを残すと、再有効化時に二重に出る
+            mobManager.shutdown();
         }
         getLogger().info("CustomMobs 無効化");
     }
