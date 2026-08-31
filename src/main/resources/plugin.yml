@@ -4,6 +4,10 @@ main: com.kaguya.custommobs.CustomMobsPlugin
 api-version: '1.20'
 author: kaguya-prj
 
+# CoreProtect: ペットの建築ログ記録に使用(未導入でも起動はする)。フォーク(customProtect等)にも
+# 対応しているが、名前解決の都合上ここではオリジナルの名前だけ書いておけば読み込み順は保証される。
+softdepend: [CoreProtect, customProtect]
+
 commands:
   cmob:
     description: Custom Mob管理コマンド

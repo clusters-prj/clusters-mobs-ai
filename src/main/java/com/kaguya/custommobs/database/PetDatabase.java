@@ -100,6 +100,22 @@ public class PetDatabase {
                     "  claimed_at TIMESTAMP NULL DEFAULT NULL," +
                     "  INDEX idx_owner_unclaimed (owner_uuid, claimed_at)" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+            // 建築ジョブの進行状況。チャンクアンロード/サーバー再起動で本体Mobが
+            // 一度「拾い直し」の対象になっても続きから再開できるよう、ブロックを
+            // 1つ置くたびに進捗を書き込む(完了したら行ごと消す)。
+            stmt.executeUpdate(
+                    "CREATE TABLE IF NOT EXISTS cm_pet_build_jobs (" +
+                    "  mob_uuid UUID PRIMARY KEY," +
+                    "  owner_uuid UUID NOT NULL," +
+                    "  listing_id INT NOT NULL," +
+                    "  world VARCHAR(64) NOT NULL," +
+                    "  origin_x DOUBLE NOT NULL," +
+                    "  origin_y DOUBLE NOT NULL," +
+                    "  origin_z DOUBLE NOT NULL," +
+                    "  next_index INT NOT NULL," +
+                    "  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         }
     }
 
@@ -235,6 +251,61 @@ public class PetDatabase {
     }
 
     public record BlueprintRow(String json, String title) {
+    }
+
+    /** 建築ジョブの進行状況を保存する(INSERTなら開始、既存なら進捗の更新)。ブロックを置くたびに呼ぶ想定 */
+    public void saveBuildProgress(UUID mobUuid, UUID ownerUuid, int listingId, org.bukkit.Location origin, int nextIndex)
+            throws SQLException {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "INSERT INTO cm_pet_build_jobs (mob_uuid, owner_uuid, listing_id, world, origin_x, origin_y, origin_z, next_index) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?) " +
+                     "ON DUPLICATE KEY UPDATE listing_id = VALUES(listing_id), world = VALUES(world), " +
+                     "origin_x = VALUES(origin_x), origin_y = VALUES(origin_y), origin_z = VALUES(origin_z), " +
+                     "next_index = VALUES(next_index)")) {
+            ps.setObject(1, mobUuid);
+            ps.setObject(2, ownerUuid);
+            ps.setInt(3, listingId);
+            ps.setString(4, origin.getWorld().getName());
+            ps.setDouble(5, origin.getX());
+            ps.setDouble(6, origin.getY());
+            ps.setDouble(7, origin.getZ());
+            ps.setInt(8, nextIndex);
+            ps.executeUpdate();
+        }
+    }
+
+    /** 中断していた建築ジョブがあれば取得する。無ければ null */
+    public BuildProgress loadBuildProgress(UUID mobUuid) throws SQLException {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT owner_uuid, listing_id, world, origin_x, origin_y, origin_z, next_index " +
+                     "FROM cm_pet_build_jobs WHERE mob_uuid = ?")) {
+            ps.setObject(1, mobUuid);
+            try (var rs = ps.executeQuery()) {
+                if (!rs.next()) return null;
+                return new BuildProgress(
+                        UUID.fromString(rs.getString("owner_uuid")),
+                        rs.getInt("listing_id"),
+                        rs.getString("world"),
+                        rs.getDouble("origin_x"),
+                        rs.getDouble("origin_y"),
+                        rs.getDouble("origin_z"),
+                        rs.getInt("next_index"));
+            }
+        }
+    }
+
+    public record BuildProgress(UUID ownerUuid, int listingId, String world,
+                                 double originX, double originY, double originZ, int nextIndex) {
+    }
+
+    public void deleteBuildProgress(UUID mobUuid) throws SQLException {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement("DELETE FROM cm_pet_build_jobs WHERE mob_uuid = ?")) {
+            ps.setObject(1, mobUuid);
+            ps.executeUpdate();
+        }
     }
 
     public void deletePet(UUID mobUuid) throws SQLException {

@@ -31,6 +31,7 @@ public class CustomMobsPlugin extends JavaPlugin {
         BlueprintLoader blueprintLoader = new BlueprintLoader(getLogger());
         PetManager petManager = new PetManager(this, mobManager, petDatabase,
                 getConfig().getString("server-id", "mc1"), blueprintLoader);
+        mobManager.setBuildProgressListener(petManager);
         petManager.syncCatalog();
 
         getServer().getPluginManager().registerEvents(new MobDeathListener(mobManager), this);

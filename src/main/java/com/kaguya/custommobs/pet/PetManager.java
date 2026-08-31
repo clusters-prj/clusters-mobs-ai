@@ -5,19 +5,25 @@ import com.kaguya.custommobs.manager.MobManager;
 import com.kaguya.custommobs.model.CustomMobInstance;
 import com.kaguya.custommobs.model.MobDefinition;
 import com.kaguya.custommobs.model.PetConfig;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Level;
 
 /**
  * ペットのテイム・解放を担当する。DB書き込みは非同期、Mob/PDCへの反映はメインスレッドで行う
  * (Bukkit APIはメインスレッド以外から呼べないため)。
+ * <p>
+ * {@link BuildProgressListener} も実装し、建築ジョブの進行(cm_pet_build_jobs)の
+ * 保存・再開も担う。
  */
-public class PetManager {
+public class PetManager implements BuildProgressListener {
 
     private final JavaPlugin plugin;
     private final MobManager mobManager;
@@ -76,7 +82,7 @@ public class PetManager {
                     player.sendMessage("§c設計図に有効なブロックがありません: " + row.title());
                     return;
                 }
-                target.setActiveBuild(new BuildJob(blueprint, origin));
+                target.setActiveBuild(new BuildJob(blueprint, origin, listingId));
                 player.sendMessage("§a" + target.getDefinition().getDisplayName()
                         + " §aに設計図「" + blueprint.getName() + "」を割り当てました(" + blueprint.getBlocks().size() + "ブロック)");
             });
@@ -133,6 +139,69 @@ public class PetManager {
 
     public boolean isDatabaseReady() {
         return database.isReady();
+    }
+
+    /** ブロックを1つ置くたびにMobManagerから呼ばれる。進行状況をDBに書いておく(非同期) */
+    @Override
+    public void onBlockPlaced(UUID mobUuid, UUID ownerUuid, int listingId, Location origin, int nextIndex) {
+        if (!database.isReady()) return;
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                database.saveBuildProgress(mobUuid, ownerUuid, listingId, origin, nextIndex);
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.WARNING, "建築進行状況の保存に失敗しました", e);
+            }
+        });
+    }
+
+    /** 設計図の設置が完了したときにMobManagerから呼ばれる。進行状況の行を消す(非同期) */
+    @Override
+    public void onBuildFinished(UUID mobUuid) {
+        if (!database.isReady()) return;
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                database.deleteBuildProgress(mobUuid);
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.WARNING, "建築進行状況の削除に失敗しました", e);
+            }
+        });
+    }
+
+    /**
+     * 本体Mobが拾い直された直後にMobManagerから呼ばれる。中断していた建築ジョブがあれば
+     * DBから読み直して再開する(チャンクアンロード/サーバー再起動で進行中の建築が
+     * 消えたままにならないようにするため)。
+     */
+    @Override
+    public void onAdopted(CustomMobInstance instance) {
+        if (!database.isReady()) return;
+        UUID mobUuid = instance.getEntity().getUniqueId();
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            PetDatabase.BuildProgress progress;
+            PetDatabase.BlueprintRow row = null;
+            try {
+                progress = database.loadBuildProgress(mobUuid);
+                if (progress != null) {
+                    row = database.findOwnedBlueprintJson(progress.ownerUuid(), progress.listingId());
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.WARNING, "建築進行状況の再開に失敗しました", e);
+                return;
+            }
+            if (progress == null || row == null) return;
+
+            Blueprint blueprint = blueprintLoader.parse(row.json(), row.title());
+            if (blueprint == null || blueprint.getBlocks().isEmpty()) return;
+
+            PetDatabase.BuildProgress finalProgress = progress;
+            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                if (!instance.getEntity().isValid()) return;
+                World world = Bukkit.getWorld(finalProgress.world());
+                if (world == null) return;
+                Location origin = new Location(world, finalProgress.originX(), finalProgress.originY(), finalProgress.originZ());
+                instance.setActiveBuild(new BuildJob(blueprint, origin, finalProgress.listingId(), finalProgress.nextIndex()));
+            });
+        });
     }
 
     /**
@@ -220,6 +289,7 @@ public class PetManager {
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 database.deletePet(mobUuid);
+                database.deleteBuildProgress(mobUuid); // 手放した時点で建築ジョブの再開対象からも外す
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.WARNING, "ペット解除の記録に失敗しました", e);
             }

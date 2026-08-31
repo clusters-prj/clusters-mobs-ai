@@ -17,6 +17,11 @@
             <id>papermc</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
+        <!-- CoreProtect API(ペットの建築ログ記録で使用) -->
+        <repository>
+            <id>playpro</id>
+            <url>https://maven.playpro.com</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -50,6 +55,20 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.10.1</version>
+        </dependency>
+
+        <!-- CoreProtect(ペットの建築ログ記録のみ。サーバー上のプラグインを使うのでshadeしない) -->
+        <dependency>
+            <groupId>net.coreprotect</groupId>
+            <artifactId>coreprotect</artifactId>
+            <version>24.0</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 

@@ -6,9 +6,12 @@ import com.kaguya.custommobs.model.AiBehaviorConfig;
 import com.kaguya.custommobs.model.CustomMobInstance;
 import com.kaguya.custommobs.model.MobDefinition;
 import com.kaguya.custommobs.model.ModelConfig;
+import com.kaguya.custommobs.integration.CoreProtectLogger;
 import com.kaguya.custommobs.pet.Blueprint;
 import com.kaguya.custommobs.pet.BuildJob;
+import com.kaguya.custommobs.pet.BuildProgressListener;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -55,6 +58,9 @@ public class MobManager {
     private final Set<String> loggedBehaviorFailures = new HashSet<>();
     /** config.yml の pets.build-interval-ticks。デフォルト値はロード失敗時のフォールバック */
     private long buildIntervalTicks = 5;
+    /** 建築の進行をDBに反映するフック。ペット機能が無効(DB未接続)ならnullのまま */
+    private BuildProgressListener buildProgressListener;
+    private final CoreProtectLogger coreProtectLogger;
 
     private long tickCounter = 0;
 
@@ -63,7 +69,12 @@ public class MobManager {
         this.mobIdKey = new NamespacedKey(plugin, "custom_mob_id");
         this.ownerKey = new NamespacedKey(plugin, "pet_owner");
         this.standOwnerKey = new NamespacedKey(plugin, "custom_mob_owner");
+        this.coreProtectLogger = new CoreProtectLogger(plugin);
         registerDefaultBehaviors();
+    }
+
+    public void setBuildProgressListener(BuildProgressListener listener) {
+        this.buildProgressListener = listener;
     }
 
     public void setBuildIntervalTicks(long ticks) {
@@ -180,7 +191,21 @@ public class MobManager {
             instance.setModelStand(existing != null ? existing : spawnModelStand(entity, def.getModel()));
         }
 
+        // 所有者もPDCに永続化してあるので、拾い直しのたびに読み直す
+        // (これをやらないと、再起動/チャンク再読み込みのたびにペットが「誰のものでもない」扱いに戻ってしまう)
+        String ownerRaw = entity.getPersistentDataContainer().get(ownerKey, PersistentDataType.STRING);
+        if (ownerRaw != null) {
+            try {
+                instance.setOwnerUuid(UUID.fromString(ownerRaw));
+            } catch (IllegalArgumentException ex) {
+                plugin.getLogger().warning("pet_ownerタグの形式が不正です (" + mobId + "): " + ownerRaw);
+            }
+        }
+
         activeMobs.put(entity.getUniqueId(), instance);
+        if (buildProgressListener != null) {
+            buildProgressListener.onAdopted(instance);
+        }
         return instance;
     }
 
@@ -382,12 +407,27 @@ public class MobManager {
         block.setType(material);
         target.getWorld().playSound(target, Sound.BLOCK_STONE_PLACE, 0.6f, 1.0f);
 
+        UUID ownerUuid = instance.getOwnerUuid();
+        if (ownerUuid != null) {
+            String ownerName = Bukkit.getOfflinePlayer(ownerUuid).getName();
+            if (ownerName != null) {
+                coreProtectLogger.logPlacement(ownerName, target, material, block.getBlockData());
+            }
+        }
+
         job.markPlaced(tickCounter);
         job.advance();
 
+        if (buildProgressListener != null) {
+            if (job.isDone()) {
+                buildProgressListener.onBuildFinished(self.getUniqueId());
+            } else if (ownerUuid != null) {
+                buildProgressListener.onBlockPlaced(self.getUniqueId(), ownerUuid, job.getListingId(), origin, job.getNextIndex());
+            }
+        }
+
         if (job.isDone()) {
             instance.setActiveBuild(null);
-            UUID ownerUuid = instance.getOwnerUuid();
             if (ownerUuid != null) {
                 var owner = plugin.getServer().getPlayer(ownerUuid);
                 if (owner != null) {
