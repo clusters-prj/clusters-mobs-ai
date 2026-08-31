@@ -146,7 +146,10 @@ public class PetManager {
             for (MobDefinition def : mobManager.getAllDefinitions().values()) {
                 if (def.getPet() == null) continue;
                 try {
-                    database.upsertCatalogEntry(def.getId(), def.getDisplayName(), def.getPet().getTameCost());
+                    // Web側はプレーンテキストで表示するだけなので、&で始まるレガシーカラーコードは
+                    // ここで取り除いておく("&dミニやちよ"のように表示されるのを防ぐ)
+                    String plainName = def.getDisplayName().replaceAll("(?i)&[0-9a-fk-or]", "");
+                    database.upsertCatalogEntry(def.getId(), plainName, def.getPet().getTameCost());
                 } catch (SQLException e) {
                     plugin.getLogger().log(Level.WARNING, "ペットカタログの同期に失敗しました (" + def.getId() + ")", e);
                 }
