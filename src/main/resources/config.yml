@@ -6,8 +6,8 @@ server-id: "mc1"
 # ペット所有権・経済連携用DB(FJEconomyと同じMariaDBインスタンス・DBに接続する)
 database:
   url: "jdbc:mariadb://10.2.1.27:3306/fjeconomy?characterEncoding=utf8mb4&serverTimezone=Asia/Tokyo"
-  username: "root"
-  password: ""
+  username: "fje"
+  password: "your_password_here"
   pool-size: 5
   max-lifetime: 1800000
 
