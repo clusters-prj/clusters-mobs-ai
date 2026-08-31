@@ -1,5 +1,5 @@
 name: CustomMobs
-version: 0.1.0
+version: '${project.version}'
 main: com.kaguya.custommobs.CustomMobsPlugin
 api-version: '1.20'
 author: kaguya-prj
@@ -7,4 +7,10 @@ author: kaguya-prj
 commands:
   cmob:
     description: Custom Mob管理コマンド
-    usage: /cmob spawn <mobId> | /cmob reload
+    usage: /cmob spawn <mobId> [x y z] [world] | /cmob reload | /cmob list | /cmob cleanup [mobId]
+    permission: custommobs.command
+
+permissions:
+  custommobs.command:
+    description: /cmob コマンドを使用できる
+    default: op

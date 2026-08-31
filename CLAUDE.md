@@ -37,19 +37,36 @@ Java 17 / paper-api 1.20.4。出力は `target/custom-mobs.jar`。**テストは
 
 - **移動は `setVelocity` ではなく `teleport` で行う**(AI無効下では速度が移動に反映されないため)。
   `MeleeAttackBehavior` がその実装例
+- teleportは当たり判定を無視するので、`MeleeAttackBehavior` 側でブロックとの重なり
+  (`Block#getBoundingBox`)を自前で見ている。壁は通れず、1ブロックまでの段差は登り、
+  ハーフブロックやカーペットの高さにも合わせる。足場が見つからない場合はその高さのまま進む
+  (**AI無効のMobは落下しない**ので、落とす処理は入れていない)
 - モデル用ArmorStandの位置追従も毎Tickの `teleport` で行っている
+- AIビヘイビアの例外は `MobManager.tickAll()` で握りつぶしてログに出す(同じ例外は初回のみ)。
+  1体の例外で他のMobのTickを巻き込まないため
 
 AIは `AiBehavior` インターフェースの実装を `MobManager.behaviorRegistry` に登録する形で拡張する。
 YAMLの `type` 文字列がキーになる。
 
-### 状態がメモリ上にしかない
+### 状態がメモリ上にしかない(拾い直しで補っている)
 
-`activeMobs`(UUID → `CustomMobInstance`)はメモリ上のみで、**チャンク/サーバー再起動時に復元する処理が
-存在しない。** モデル用ArmorStandは `setPersistent(false)` である一方、本体Mobの `setInvisible(true)` は
+`activeMobs`(UUID → `CustomMobInstance`)はメモリ上のみにある。モデル用ArmorStandは
+`setPersistent(false)` である一方、本体Mobの `setInvisible(true)` とPDCのmobIdタグは
 NBTとして永続化される。
 
-結果として**サーバーを再起動すると既存のカスタムMobは「透明でAIも効かない置物」として残る。**
-デバッグ中に「何も見えない」場合、まずこれを疑うこと。掃除は下記のrcon経由で行う。
+そのままだと**サーバー再起動やチャンクの読み直しでカスタムMobが「透明でAIも効かない置物」になる**ため、
+`MobManager.adopt()` でPDCタグの付いたMobを拾い直している。呼び出し口は2つ:
+
+- `MobEntityLoadListener`(`EntitiesLoadEvent`) — チャンクのエンティティが読み込まれたとき。
+  1.17以降エンティティはチャンクとは別に読み込まれるので `ChunkLoadEvent` では拾えない。
+  読み込みの最中に `spawnEntity` したくないので1tick遅らせて実行している
+- `CustomMobsPlugin.onEnable()` の `adoptLoadedEntities()` — `/reload` や再有効化のとき
+
+拾い直しでは**ステータスを再適用しない**(HPが全回復してしまうため)。定義がmobs.ymlから消えた
+Mobは拾えないので、その場合は警告ログを出して `/cmob cleanup <mobId>` を案内する。
+
+モデル用ArmorStandには持ち主のUUIDをPDC(`custom_mob_owner`)で持たせてあり、拾い直しのときに
+既存のStandを再利用する(重複したStandはそこで消される)。`onDisable` でもStandだけは片付ける。
 
 ## 見た目の描画(最重要)
 
@@ -101,8 +118,16 @@ docker exec paper-server rcon-cli 'execute positioned 0.0 0.0 0.0 run data get e
 ```
 
 **Essentialsが `/kill` を上書きしている**ため、エンティティを消すときは `minecraft:kill` と明示する。
+カスタムMobだけを消すなら `/cmob cleanup [mobId]` が使える(読み込み済みチャンクが対象。
+本体MobとモデルStandの両方を消す)。
 
-`/cmob spawn` はプレイヤー専用なのでrconからは実行できない(`CustomMobCommand`)。
+`/cmob spawn` は座標を渡せばrcon/コンソールからも実行できる:
+
+```bash
+docker exec paper-server rcon-cli 'cmob spawn miniyachiyo 0 64 0 world'
+```
+
+座標を省略した場合のみプレイヤー専用になる。`/cmob` には `custommobs.command` 権限(default: op)が要る。
 
 ## 描画の切り分け方
 

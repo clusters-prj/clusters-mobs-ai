@@ -23,6 +23,8 @@ public class MobDeathListener implements Listener {
         LivingEntity entity = event.getEntity();
         String mobId = mobManager.getMobId(entity);
         if (mobId == null) return; // カスタムMobでなければ何もしない
+        // モデル用ArmorStandにも同じmobIdタグを付けているので、本体だけを対象にする
+        if (mobManager.isModelStand(entity)) return;
 
         MobDefinition def = mobManager.getDefinition(mobId);
         if (def == null) return;
@@ -32,13 +34,14 @@ public class MobDeathListener implements Listener {
         event.setDroppedExp(0);
 
         for (DropEntry drop : def.getDrops()) {
-            if (ThreadLocalRandom.current().nextDouble() <= drop.getChance()) {
-                int amount = drop.getAmountMin() == drop.getAmountMax()
-                        ? drop.getAmountMin()
-                        : ThreadLocalRandom.current().nextInt(drop.getAmountMin(), drop.getAmountMax() + 1);
-                if (amount > 0) {
-                    event.getDrops().add(new ItemStack(drop.getItem(), amount));
-                }
+            if (drop.getChance() <= 0.0) continue;
+            if (ThreadLocalRandom.current().nextDouble() >= drop.getChance()) continue;
+
+            int amount = drop.getAmountMin() == drop.getAmountMax()
+                    ? drop.getAmountMin()
+                    : ThreadLocalRandom.current().nextInt(drop.getAmountMin(), drop.getAmountMax() + 1);
+            if (amount > 0) {
+                event.getDrops().add(new ItemStack(drop.getItem(), amount));
             }
         }
 
