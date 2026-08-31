@@ -6,10 +6,15 @@ import com.kaguya.custommobs.model.AiBehaviorConfig;
 import com.kaguya.custommobs.model.CustomMobInstance;
 import com.kaguya.custommobs.model.MobDefinition;
 import com.kaguya.custommobs.model.ModelConfig;
+import com.kaguya.custommobs.pet.Blueprint;
+import com.kaguya.custommobs.pet.BuildJob;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
@@ -29,16 +34,24 @@ public class MobManager {
 
     private final JavaPlugin plugin;
     private final NamespacedKey mobIdKey;
+    private final NamespacedKey ownerKey;
     private final Map<String, MobDefinition> definitions = new HashMap<>();
     private final Map<UUID, CustomMobInstance> activeMobs = new HashMap<>();
     private final Map<String, AiBehavior> behaviorRegistry = new HashMap<>();
+    /** config.yml の pets.build-interval-ticks。デフォルト値はロード失敗時のフォールバック */
+    private long buildIntervalTicks = 5;
 
     private long tickCounter = 0;
 
     public MobManager(JavaPlugin plugin) {
         this.plugin = plugin;
         this.mobIdKey = new NamespacedKey(plugin, "custom_mob_id");
+        this.ownerKey = new NamespacedKey(plugin, "pet_owner");
         registerDefaultBehaviors();
+    }
+
+    public void setBuildIntervalTicks(long ticks) {
+        this.buildIntervalTicks = Math.max(1, ticks);
     }
 
     private void registerDefaultBehaviors() {
@@ -150,6 +163,17 @@ public class MobManager {
         return entity.getPersistentDataContainer().get(mobIdKey, PersistentDataType.STRING);
     }
 
+    /** ペットの所有者を設定し、再起動をまたいでも読めるようPDCにも書く */
+    public void setOwner(CustomMobInstance instance, UUID ownerUuid) {
+        instance.setOwnerUuid(ownerUuid);
+        instance.getEntity().getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, ownerUuid.toString());
+    }
+
+    public void clearOwner(CustomMobInstance instance) {
+        instance.setOwnerUuid(null);
+        instance.getEntity().getPersistentDataContainer().remove(ownerKey);
+    }
+
     /** BukkitSchedulerから毎Tick呼ばれる想定 */
     public void tickAll() {
         tickCounter++;
@@ -174,6 +198,65 @@ public class MobManager {
                 AiBehavior behavior = behaviorRegistry.get(behaviorConfig.getType());
                 if (behavior != null) {
                     behavior.tick(instance, behaviorConfig, tickCounter);
+                }
+            }
+
+            if (instance.getActiveBuild() != null) {
+                processBuildJob(instance);
+            }
+        }
+    }
+
+    /**
+     * 建築ジョブを1Tick分進める。mobs.ymlの静的なaiリストとは別に、
+     * /cmob build コマンドで動的に割り当てられたジョブをここで直接処理する
+     * (ブループリントは個体ごと・実行時に決まるためAiBehaviorレジストリには乗せない)。
+     * <p>
+     * v1につき移動は単純テレポート(障害物回避なし)。設置先の1つ上に立たせるだけ。
+     */
+    private void processBuildJob(CustomMobInstance instance) {
+        BuildJob job = instance.getActiveBuild();
+        if (!job.isReady(tickCounter, buildIntervalTicks)) return;
+
+        Blueprint blueprint = job.getBlueprint();
+        var blocks = blueprint.getBlocks();
+        int index = job.getNextIndex();
+        if (index >= blocks.size()) {
+            instance.setActiveBuild(null);
+            return;
+        }
+
+        var entry = blocks.get(index);
+        Location origin = job.getOrigin();
+        Location target = origin.clone().add(entry.getX(), entry.getY(), entry.getZ());
+
+        Material material;
+        try {
+            material = Material.valueOf(entry.getMaterial());
+        } catch (IllegalArgumentException ex) {
+            // BlueprintLoaderで弾いているはずだが、念のため
+            job.advance();
+            return;
+        }
+
+        LivingEntity self = instance.getEntity();
+        self.teleport(target.clone().add(0, 1, 0));
+
+        Block block = target.getBlock();
+        block.setType(material);
+        target.getWorld().playSound(target, Sound.BLOCK_STONE_PLACE, 0.6f, 1.0f);
+
+        job.markPlaced(tickCounter);
+        job.advance();
+
+        if (job.isDone()) {
+            instance.setActiveBuild(null);
+            UUID ownerUuid = instance.getOwnerUuid();
+            if (ownerUuid != null) {
+                var owner = plugin.getServer().getPlayer(ownerUuid);
+                if (owner != null) {
+                    owner.sendMessage("§a" + instance.getDefinition().getDisplayName()
+                            + " §aが設計図「" + blueprint.getName() + "」の建築を完了しました");
                 }
             }
         }

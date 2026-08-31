@@ -4,6 +4,7 @@ import com.kaguya.custommobs.model.AiBehaviorConfig;
 import com.kaguya.custommobs.model.DropEntry;
 import com.kaguya.custommobs.model.MobDefinition;
 import com.kaguya.custommobs.model.ModelConfig;
+import com.kaguya.custommobs.model.PetConfig;
 import com.kaguya.custommobs.model.StatBlock;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -83,7 +84,13 @@ public class MobDefinitionLoader {
                     model = new ModelConfig(modelMat, customModelData, scale, yOffset);
                 }
 
-                result.put(id, new MobDefinition(id, baseEntity, displayName, stats, drops, aiList, model));
+                PetConfig pet = null;
+                if (yaml.isConfigurationSection(base + "pet")) {
+                    long tameCost = yaml.getLong(base + "pet.tame-cost", 0);
+                    pet = new PetConfig(tameCost);
+                }
+
+                result.put(id, new MobDefinition(id, baseEntity, displayName, stats, drops, aiList, model, pet));
                 logger.info("Mob定義ロード完了: " + id);
             } catch (Exception ex) {
                 logger.warning("Mob定義の読み込みに失敗しました (" + id + "): " + ex.getMessage());

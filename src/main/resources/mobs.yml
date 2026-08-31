@@ -48,6 +48,8 @@ mobs:
       custom-model-data: 1002
       scale: 1.0
       y-offset: 1.0
+    pet:
+      tame-cost: 500
 
   frost_skeleton:
     base-entity: SKELETON

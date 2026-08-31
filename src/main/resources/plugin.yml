@@ -7,4 +7,4 @@ author: kaguya-prj
 commands:
   cmob:
     description: Custom Mob管理コマンド
-    usage: /cmob spawn <mobId> | /cmob reload
+    usage: /cmob spawn <mobId> | /cmob reload | /cmob list | /cmob tame | /cmob release | /cmob build <blueprintName> | /cmob mypets

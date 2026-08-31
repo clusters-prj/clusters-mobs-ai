@@ -1,21 +1,42 @@
 package com.kaguya.custommobs;
 
+import com.kaguya.custommobs.database.PetDatabase;
 import com.kaguya.custommobs.manager.MobDeathListener;
 import com.kaguya.custommobs.manager.MobManager;
+import com.kaguya.custommobs.pet.BlueprintLoader;
+import com.kaguya.custommobs.pet.PetManager;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.io.File;
 
 public class CustomMobsPlugin extends JavaPlugin {
 
     private MobManager mobManager;
+    private PetDatabase petDatabase;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         mobManager = new MobManager(this);
         mobManager.reloadDefinitions();
+        mobManager.setBuildIntervalTicks(getConfig().getLong("pets.build-interval-ticks", 5));
+
+        petDatabase = new PetDatabase(this);
+        boolean dbReady = petDatabase.initialize();
+        if (!dbReady) {
+            getLogger().warning("ペット用データベースに接続できなかったため、テイム/建築機能は無効です(Mob自体の機能には影響しません)");
+        }
+
+        File blueprintDir = new File(getDataFolder(), getConfig().getString("pets.blueprint-directory", "blueprints"));
+        if (!blueprintDir.exists()) {
+            blueprintDir.mkdirs();
+        }
+        BlueprintLoader blueprintLoader = new BlueprintLoader(blueprintDir, getLogger());
+        PetManager petManager = new PetManager(this, mobManager, petDatabase,
+                getConfig().getString("server-id", "mc1"), blueprintLoader);
 
         getServer().getPluginManager().registerEvents(new MobDeathListener(mobManager), this);
-        getCommand("cmob").setExecutor(new CustomMobCommand(mobManager));
+        getCommand("cmob").setExecutor(new CustomMobCommand(mobManager, petManager));
 
         // 1tickごとにAI Tick(重くなってきたら2~4tick間引き推奨)
         getServer().getScheduler().runTaskTimer(this, mobManager::tickAll, 1L, 1L);
@@ -25,6 +46,9 @@ public class CustomMobsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (petDatabase != null) {
+            petDatabase.shutdown();
+        }
         getLogger().info("CustomMobs 無効化");
     }
 
