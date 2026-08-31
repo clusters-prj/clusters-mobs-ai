@@ -36,9 +36,13 @@ public class PetDatabase {
             return false;
         }
 
+        String resolvedUrl = config.getString("database.url", "jdbc:mariadb://localhost:3306/fjeconomy");
+        plugin.getLogger().info("[DEBUG] database.url resolved to: " + resolvedUrl
+                + " (config.yml has database section: " + config.isConfigurationSection("database") + ")");
+
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setDriverClassName("com.kaguya.custommobs.libs.mariadb.jdbc.Driver");
-        hikariConfig.setJdbcUrl(config.getString("database.url", "jdbc:mariadb://localhost:3306/fjeconomy"));
+        hikariConfig.setJdbcUrl(resolvedUrl);
         hikariConfig.setUsername(config.getString("database.username", "root"));
         hikariConfig.setPassword(config.getString("database.password", ""));
         hikariConfig.setMaximumPoolSize(config.getInt("database.pool-size", 5));
