@@ -3,11 +3,13 @@ package com.kaguya.custommobs;
 import com.kaguya.custommobs.database.PetDatabase;
 import com.kaguya.custommobs.manager.MobDeathListener;
 import com.kaguya.custommobs.manager.MobManager;
+import com.kaguya.custommobs.model.MobDefinition;
 import com.kaguya.custommobs.pet.BlueprintLoader;
 import com.kaguya.custommobs.pet.PetManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
+import java.sql.SQLException;
+import java.util.logging.Level;
 
 public class CustomMobsPlugin extends JavaPlugin {
 
@@ -25,13 +27,11 @@ public class CustomMobsPlugin extends JavaPlugin {
         boolean dbReady = petDatabase.initialize();
         if (!dbReady) {
             getLogger().warning("ペット用データベースに接続できなかったため、テイム/建築機能は無効です(Mob自体の機能には影響しません)");
+        } else {
+            syncPetCatalog();
         }
 
-        File blueprintDir = new File(getDataFolder(), getConfig().getString("pets.blueprint-directory", "blueprints"));
-        if (!blueprintDir.exists()) {
-            blueprintDir.mkdirs();
-        }
-        BlueprintLoader blueprintLoader = new BlueprintLoader(blueprintDir, getLogger());
+        BlueprintLoader blueprintLoader = new BlueprintLoader(getLogger());
         PetManager petManager = new PetManager(this, mobManager, petDatabase,
                 getConfig().getString("server-id", "mc1"), blueprintLoader);
 
@@ -42,6 +42,24 @@ public class CustomMobsPlugin extends JavaPlugin {
         getServer().getScheduler().runTaskTimer(this, mobManager::tickAll, 1L, 1L);
 
         getLogger().info("CustomMobs 有効化完了");
+    }
+
+    /**
+     * mobs.ymlのpet:セクションをcm_pet_catalogへ反映する。Webダッシュボード(fjew)の
+     * ペットショップページはこのテーブルを見るだけなので、mobs.ymlを常に単一の真実の
+     * ソースに保つため起動のたびに(非同期で)upsertする。
+     */
+    private void syncPetCatalog() {
+        getServer().getScheduler().runTaskAsynchronously(this, () -> {
+            for (MobDefinition def : mobManager.getAllDefinitions().values()) {
+                if (def.getPet() == null) continue;
+                try {
+                    petDatabase.upsertCatalogEntry(def.getId(), def.getDisplayName(), def.getPet().getTameCost());
+                } catch (SQLException e) {
+                    getLogger().log(Level.WARNING, "ペットカタログの同期に失敗しました (" + def.getId() + ")", e);
+                }
+            }
+        });
     }
 
     @Override

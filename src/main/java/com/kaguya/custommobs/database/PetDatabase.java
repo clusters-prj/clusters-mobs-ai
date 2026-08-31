@@ -77,6 +77,42 @@ public class PetDatabase {
                     "  tamed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
                     "  INDEX idx_owner (owner_uuid)" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+            // Webダッシュボード(fjew)のペットショップページが読む公式カタログ。
+            // mobs.ymlのpet:セクションが唯一の真実のソースで、起動のたびにupsertするだけ
+            // (Web側からは書き込まない)。
+            stmt.executeUpdate(
+                    "CREATE TABLE IF NOT EXISTS cm_pet_catalog (" +
+                    "  mob_type VARCHAR(64) PRIMARY KEY," +
+                    "  display_name VARCHAR(255) NOT NULL," +
+                    "  tame_cost BIGINT NOT NULL," +
+                    "  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+            // Webで購入されたが、まだゲーム内で /cmob claim を実行していない分の受け取り待ちレコード。
+            // fjew側の /api/pets/purchase がINSERTし、こちらはSELECT/UPDATEのみ行う。
+            stmt.executeUpdate(
+                    "CREATE TABLE IF NOT EXISTS cm_pet_claims (" +
+                    "  id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "  owner_uuid VARCHAR(36) NOT NULL," +
+                    "  mob_type VARCHAR(64) NOT NULL," +
+                    "  purchased_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                    "  claimed_at TIMESTAMP NULL DEFAULT NULL," +
+                    "  INDEX idx_owner_unclaimed (owner_uuid, claimed_at)" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        }
+    }
+
+    /** mobs.ymlのpet設定をカタログに反映する。Webショップの表示・価格は常にこの呼び出しが最新化する */
+    public void upsertCatalogEntry(String mobType, String displayName, long tameCost) throws SQLException {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "INSERT INTO cm_pet_catalog (mob_type, display_name, tame_cost) VALUES (?, ?, ?) " +
+                     "ON DUPLICATE KEY UPDATE display_name = VALUES(display_name), tame_cost = VALUES(tame_cost)")) {
+            ps.setString(1, mobType);
+            ps.setString(2, displayName);
+            ps.setLong(3, tameCost);
+            ps.executeUpdate();
         }
     }
 
@@ -145,6 +181,60 @@ public class PetDatabase {
     }
 
     public record PetRecord(String mobType, String serverId, String displayName) {
+    }
+
+    /** Webで購入され、まだ受け取っていない分。/cmob claim から使う */
+    public java.util.List<PetClaim> listUnclaimed(UUID ownerUuid) throws SQLException {
+        java.util.List<PetClaim> result = new java.util.ArrayList<>();
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT id, mob_type FROM cm_pet_claims WHERE owner_uuid = ? AND claimed_at IS NULL")) {
+            ps.setString(1, ownerUuid.toString());
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new PetClaim(rs.getInt("id"), rs.getString("mob_type")));
+                }
+            }
+        }
+        return result;
+    }
+
+    public record PetClaim(int id, String mobType) {
+    }
+
+    public void markClaimed(int claimId) throws SQLException {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE cm_pet_claims SET claimed_at = CURRENT_TIMESTAMP WHERE id = ?")) {
+            ps.setInt(1, claimId);
+            ps.executeUpdate();
+        }
+    }
+
+    /**
+     * マーケットプレイスで購入済みの設計図(item_type='blueprint')の中身を取得する。
+     * fjewのアップロード処理がJSONの中身をそのまま marketplace_listings.blueprint_json に
+     * 複製しているので、ここではファイルI/Oなしで直接読める(DB経由のみで完結させる)。
+     *
+     * @return JSON文字列とタイトル。所有していない/該当なしの場合は null
+     */
+    public BlueprintRow findOwnedBlueprintJson(UUID ownerUuid, int listingId) throws SQLException {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT l.blueprint_json, l.title FROM marketplace_nfts n " +
+                     "JOIN marketplace_listings l ON n.listing_id = l.id " +
+                     "WHERE n.owner_uuid = ? AND n.listing_id = ? AND l.item_type = 'blueprint' " +
+                     "LIMIT 1")) {
+            ps.setString(1, ownerUuid.toString());
+            ps.setInt(2, listingId);
+            try (var rs = ps.executeQuery()) {
+                if (!rs.next()) return null;
+                return new BlueprintRow(rs.getString("blueprint_json"), rs.getString("title"));
+            }
+        }
+    }
+
+    public record BlueprintRow(String json, String title) {
     }
 
     public void deletePet(UUID mobUuid) throws SQLException {

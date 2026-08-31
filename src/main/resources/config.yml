@@ -14,5 +14,3 @@ database:
 pets:
   # 1ブロック設置するごとの待機Tick数(建築アニメーションの速さ)
   build-interval-ticks: 5
-  # 設計図JSONの配置ディレクトリ(plugins/CustomMobs/ からの相対パス)
-  blueprint-directory: "blueprints"

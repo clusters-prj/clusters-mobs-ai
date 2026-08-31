@@ -11,9 +11,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
-import java.sql.SQLException;
-import java.util.List;
-
 public class CustomMobCommand implements CommandExecutor {
 
     /** 視線でペットを狙う際の最大距離(ブロック) */
@@ -60,6 +57,7 @@ public class CustomMobCommand implements CommandExecutor {
             case "release" -> handleRelease(sender);
             case "build" -> handleBuild(sender, args);
             case "mypets" -> handleMyPets(sender);
+            case "claim" -> handleClaim(sender);
             default -> sendUsage(sender);
         }
         return true;
@@ -72,8 +70,9 @@ public class CustomMobCommand implements CommandExecutor {
         sender.sendMessage("§7 /cmob list");
         sender.sendMessage("§7 /cmob tame  §8- 視線の先のMobをテイム");
         sender.sendMessage("§7 /cmob release  §8- 視線の先の自分のペットを手放す");
-        sender.sendMessage("§7 /cmob build <blueprintName>  §8- 視線の先の自分のペットに建築させる");
+        sender.sendMessage("§7 /cmob build <listingId>  §8- マーケットプレイスで購入済みの設計図で視線の先の自分のペットに建築させる");
         sender.sendMessage("§7 /cmob mypets  §8- 自分のペット一覧");
+        sender.sendMessage("§7 /cmob claim  §8- Webショップで購入したペットを受け取る");
     }
 
     private void handleTame(CommandSender sender) {
@@ -102,7 +101,14 @@ public class CustomMobCommand implements CommandExecutor {
         Player player = requirePlayer(sender);
         if (player == null) return;
         if (args.length < 2) {
-            player.sendMessage("§c使い方: /cmob build <blueprintName>");
+            player.sendMessage("§c使い方: /cmob build <listingId>  §7(マーケットプレイスで購入した設計図の出品ID)");
+            return;
+        }
+        int listingId;
+        try {
+            listingId = Integer.parseInt(args[1]);
+        } catch (NumberFormatException ex) {
+            player.sendMessage("§clistingIdは数値で指定してください: " + args[1]);
             return;
         }
         CustomMobInstance target = findTargetedInstance(player);
@@ -110,7 +116,7 @@ public class CustomMobCommand implements CommandExecutor {
             player.sendMessage("§c視線の先にカスタムMobがいません");
             return;
         }
-        petManager.assignBuild(player, target, args[1]);
+        petManager.assignBuild(player, target, listingId);
     }
 
     private void handleMyPets(CommandSender sender) {
@@ -120,8 +126,11 @@ public class CustomMobCommand implements CommandExecutor {
             player.sendMessage("§cペット用データベースに接続できていません");
             return;
         }
-        try {
-            List<PetDatabase.PetRecord> pets = petManager.listOwned(player.getUniqueId());
+        petManager.listOwnedAsync(player.getUniqueId(), (pets, error) -> {
+            if (error != null) {
+                player.sendMessage("§cペット一覧の取得に失敗しました");
+                return;
+            }
             if (pets.isEmpty()) {
                 player.sendMessage("§eペットを飼っていません");
                 return;
@@ -130,9 +139,13 @@ public class CustomMobCommand implements CommandExecutor {
             for (PetDatabase.PetRecord pet : pets) {
                 player.sendMessage("§7 - " + pet.mobType() + " §8(" + pet.serverId() + ")");
             }
-        } catch (SQLException e) {
-            player.sendMessage("§cペット一覧の取得に失敗しました");
-        }
+        });
+    }
+
+    private void handleClaim(CommandSender sender) {
+        Player player = requirePlayer(sender);
+        if (player == null) return;
+        petManager.claim(player);
     }
 
     private Player requirePlayer(CommandSender sender) {
