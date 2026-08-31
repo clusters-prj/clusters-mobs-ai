@@ -451,6 +451,19 @@ public class MobManager {
     }
 
     /**
+     * 稼働中の全カスタムMobインスタンス。
+     * <p>
+     * 視線判定(/cmob tame 等)で、正確なレイキャストの代わりに「視線方向に近いものを探す」
+     * 方式に使う。見た目上の巨大なモデルはリソースパック側でアイテムを引き伸ばして
+     * 描画しているだけで、実際の当たり判定(本体・ArmorStandとも)は元のサイズのままなので、
+     * {@code Player#getTargetEntity}のような正確なレイキャストではほぼ絶対に当たらない
+     * (見た目の中心を狙っても、実際の当たり判定はそこにない)。
+     */
+    public java.util.Collection<CustomMobInstance> getActiveInstances() {
+        return Collections.unmodifiableCollection(activeMobs.values());
+    }
+
+    /**
      * プレイヤーの視線先など、実際にクリック/ターゲットされたエンティティからインスタンスを引く。
      * <p>
      * 見た目上のアイテムを描画しているのはモデル用ArmorStand(本体は{@code setInvisible(true)})
