@@ -229,11 +229,15 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
         return null;
     }
 
-    /** プレイヤーの視線上にある最も近いカスタムMobを探す */
+    /**
+     * プレイヤーの視線上にある最も近いカスタムMobを探す。
+     * 本体は{@code setInvisible(true)}で見えなくしてあり、実際に見えている(=狙われる)のは
+     * モデル用ArmorStandなので、その解決は{@link MobManager#getInstance(Entity)}に任せる。
+     */
     private CustomMobInstance findTargetedInstance(Player player) {
         Entity looked = player.getTargetEntity((int) TARGET_RANGE);
-        if (!(looked instanceof LivingEntity entity)) return null;
-        return mobManager.getInstance(entity.getUniqueId());
+        if (!(looked instanceof LivingEntity)) return null;
+        return mobManager.getInstance(looked);
     }
 
     private static String fmt(double value) {

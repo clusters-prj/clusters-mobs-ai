@@ -450,6 +450,27 @@ public class MobManager {
         return activeMobs.get(entityId);
     }
 
+    /**
+     * プレイヤーの視線先など、実際にクリック/ターゲットされたエンティティからインスタンスを引く。
+     * <p>
+     * 見た目上のアイテムを描画しているのはモデル用ArmorStand(本体は{@code setInvisible(true)})
+     * なので、プレイヤーが狙うのは実質こちらになる。ArmorStandのUUIDは{@code activeMobs}の
+     * キーではないため、{@link #getInstance(UUID)}をそのまま使うと常に一致しない。
+     * ここでモデルStandかどうかを見て、本体側のUUIDに引き直す。
+     */
+    public CustomMobInstance getInstance(Entity entity) {
+        if (isModelStand(entity)) {
+            String ownerRaw = entity.getPersistentDataContainer().get(standOwnerKey, PersistentDataType.STRING);
+            if (ownerRaw == null) return null;
+            try {
+                return activeMobs.get(UUID.fromString(ownerRaw));
+            } catch (IllegalArgumentException ex) {
+                return null;
+            }
+        }
+        return activeMobs.get(entity.getUniqueId());
+    }
+
     public int getActiveCount() {
         return activeMobs.size();
     }
