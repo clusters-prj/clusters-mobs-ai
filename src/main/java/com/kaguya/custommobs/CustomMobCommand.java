@@ -34,7 +34,7 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
     private static final String PET_PERMISSION = "custommobs.pet";
     private static final Set<String> ADMIN_SUB_COMMANDS = Set.of("spawn", "reload", "list", "cleanup");
     private static final List<String> SUB_COMMANDS =
-            List.of("spawn", "reload", "list", "cleanup", "tame", "release", "build", "mypets", "claim");
+            List.of("spawn", "reload", "list", "cleanup", "tame", "release", "build", "mypets", "claim", "recall");
 
     /** 視線でペットを狙う際の最大距離(ブロック) */
     private static final double TARGET_RANGE = 8.0;
@@ -84,6 +84,7 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
             case "build" -> handleBuild(sender, args);
             case "mypets" -> handleMyPets(sender);
             case "claim" -> handleClaim(sender);
+            case "recall" -> handleRecall(sender);
             default -> sendUsage(sender);
         }
         return true;
@@ -100,6 +101,7 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage("§7 /cmob build <listingId>  §8- マーケットプレイスで購入済みの設計図で視線の先の自分のペットに建築させる");
         sender.sendMessage("§7 /cmob mypets  §8- 自分のペット一覧");
         sender.sendMessage("§7 /cmob claim  §8- Webショップで購入したペットを受け取る");
+        sender.sendMessage("§7 /cmob recall  §8- 迷子になった自分のペットを呼び寄せる");
     }
 
     private void handleSpawn(CommandSender sender, String[] args) {
@@ -236,6 +238,34 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
         Player player = requirePlayer(sender);
         if (player == null) return;
         petManager.claim(player);
+    }
+
+    /**
+     * 迷子になった自分のペットを手元に呼び寄せる。視線判定は使わず、稼働中の全インスタンスから
+     * 自分の所有ペットを探して直接テレポートさせる(位置が分からないから迷子なので、
+     * 視線・距離で絞り込む方式は使えない)。
+     * <p>
+     * チャンクがアンロードされて{@code activeMobs}から外れているペットは、この場では
+     * 見つけようがない(最後にいた座標をDBに保存していないため)。
+     */
+    private void handleRecall(CommandSender sender) {
+        Player player = requirePlayer(sender);
+        if (player == null) return;
+
+        int count = 0;
+        for (CustomMobInstance instance : mobManager.getActiveInstances()) {
+            if (!instance.isOwnedBy(player.getUniqueId())) continue;
+            LivingEntity entity = instance.getEntity();
+            if (!entity.isValid()) continue;
+            entity.teleport(player.getLocation());
+            count++;
+        }
+
+        if (count == 0) {
+            player.sendMessage("§eペットが見つかりません §7(読み込まれていないチャンクにいる可能性があります)");
+        } else {
+            player.sendMessage("§a" + count + "体のペットを呼び寄せました");
+        }
     }
 
     /** プレイヤー向けペット機能(tame/release/build/mypets/claim)を使える権限があるか */

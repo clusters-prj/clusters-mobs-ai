@@ -5,6 +5,7 @@ import com.kaguya.custommobs.manager.MobDeathListener;
 import com.kaguya.custommobs.manager.MobEntityLoadListener;
 import com.kaguya.custommobs.manager.MobManager;
 import com.kaguya.custommobs.manager.ModelStandGuardListener;
+import com.kaguya.custommobs.manager.PetInfoListener;
 import com.kaguya.custommobs.pet.BlueprintLoader;
 import com.kaguya.custommobs.pet.PetManager;
 import org.bukkit.command.PluginCommand;
@@ -37,6 +38,7 @@ public class CustomMobsPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MobDeathListener(mobManager), this);
         getServer().getPluginManager().registerEvents(new MobEntityLoadListener(this, mobManager), this);
         getServer().getPluginManager().registerEvents(new ModelStandGuardListener(mobManager), this);
+        getServer().getPluginManager().registerEvents(new PetInfoListener(mobManager), this);
 
         PluginCommand command = getCommand("cmob");
         if (command != null) {
