@@ -464,6 +464,43 @@ public class MobManager {
     }
 
     /**
+     * プレイヤーの視線方向に最も近いカスタムMobを探す。
+     * <p>
+     * 正確なレイキャスト({@code Player#getTargetEntity}や、それに依存する
+     * {@code PlayerInteractEntityEvent})は、この見た目の巨大なモデル(リソースパック側で
+     * アイテムを引き伸ばして描画しているだけで、実際の当たり判定は本体・ArmorStandとも
+     * 元のサイズの小さい箱のまま)には構造的に使えない。見た目の中心を狙っても、
+     * 実際の当たり判定はそこにないため光線が当たらない(クライアントの時点で
+     * ヒットしないので、右クリックのエンティティ対象イベント自体が発火しない)。
+     * 代わりに、視線の向きから一定角度以内にいる最も近いインスタンスを「狙っている」とみなす。
+     * {@code /cmob tame}等のコマンドと、右クリック情報表示の両方から共通で使う。
+     */
+    public CustomMobInstance findNearestInView(org.bukkit.entity.Player player, double maxRange, double maxAngleDegrees) {
+        Location eye = player.getEyeLocation();
+        org.bukkit.util.Vector direction = eye.getDirection();
+
+        CustomMobInstance nearest = null;
+        double nearestDist = maxRange;
+        for (CustomMobInstance instance : activeMobs.values()) {
+            LivingEntity entity = instance.getEntity();
+            if (!entity.getWorld().equals(eye.getWorld())) continue;
+
+            org.bukkit.util.Vector toMob = entity.getLocation().toVector()
+                    .add(new org.bukkit.util.Vector(0, entity.getHeight() / 2.0, 0))
+                    .subtract(eye.toVector());
+            double dist = toMob.length();
+            if (dist < 1.0E-4 || dist > maxRange) continue;
+            if (Math.toDegrees(direction.angle(toMob)) > maxAngleDegrees) continue;
+
+            if (dist < nearestDist) {
+                nearestDist = dist;
+                nearest = instance;
+            }
+        }
+        return nearest;
+    }
+
+    /**
      * プレイヤーの視線先など、実際にクリック/ターゲットされたエンティティからインスタンスを引く。
      * <p>
      * 見た目上のアイテムを描画しているのはモデル用ArmorStand(本体は{@code setInvisible(true)})

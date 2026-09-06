@@ -13,7 +13,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -279,38 +278,9 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
         return null;
     }
 
-    /**
-     * プレイヤーの視線方向に最も近いカスタムMobを探す。
-     * <p>
-     * {@code Player#getTargetEntity}のような正確なレイキャストは使わない。見た目の
-     * 巨大なモデルはリソースパック側でアイテムを引き伸ばして描画しているだけで、実際の
-     * 当たり判定(本体・モデル用ArmorStandとも)は元のサイズの小さい箱のままのため、
-     * 見た目の中心を狙っても物理的に光線が当たらず、レイキャスト方式では実用にならない。
-     * 代わりに、視線の向きから一定角度以内にいる最も近いカスタムMobを「狙っている」とみなす。
-     */
+    /** プレイヤーの視線方向に最も近いカスタムMobを探す(実装は{@link MobManager#findNearestInView}参照) */
     private CustomMobInstance findTargetedInstance(Player player) {
-        Location eye = player.getEyeLocation();
-        Vector direction = eye.getDirection();
-
-        CustomMobInstance nearest = null;
-        double nearestDist = TARGET_RANGE;
-        for (CustomMobInstance instance : mobManager.getActiveInstances()) {
-            LivingEntity entity = instance.getEntity();
-            if (!entity.getWorld().equals(eye.getWorld())) continue;
-
-            Vector toMob = entity.getLocation().toVector()
-                    .add(new Vector(0, entity.getHeight() / 2.0, 0))
-                    .subtract(eye.toVector());
-            double dist = toMob.length();
-            if (dist < 1.0E-4 || dist > TARGET_RANGE) continue;
-            if (Math.toDegrees(direction.angle(toMob)) > TARGET_ANGLE_DEGREES) continue;
-
-            if (dist < nearestDist) {
-                nearestDist = dist;
-                nearest = instance;
-            }
-        }
-        return nearest;
+        return mobManager.findNearestInView(player, TARGET_RANGE, TARGET_ANGLE_DEGREES);
     }
 
     private static String fmt(double value) {

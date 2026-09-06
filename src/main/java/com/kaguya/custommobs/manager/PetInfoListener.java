@@ -8,20 +8,31 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
 import java.util.Locale;
 
 /**
- * カスタムMobを右クリックすると、所有者・HP・種別などを表示する。
+ * カスタムMobに向かって右クリックすると、所有者・HP・種別などを表示する。
  * <p>
- * 右クリック先は本体(見えない)かモデル用ArmorStand(見た目)のどちらの可能性もあるため、
- * 解決は{@link MobManager#getInstance(org.bukkit.entity.Entity)}に任せる。
- * 情報表示は読み取り専用なので、誰の所有かに関わらず誰でも見られるようにしている
- * (どのMobが誰のペットか分かった方が、他人のペットを誤って攻撃/操作するのを防げる)。
+ * {@code PlayerInteractEntityEvent}(実際にクリックしたエンティティを渡すイベント)は
+ * 使わない。あれはクライアント側で実際にエンティティの当たり判定にヒットしないと
+ * そもそも発火しないが、見た目上の巨大なモデルはリソースパック側でアイテムを引き伸ばして
+ * 描画しているだけで、実際の当たり判定(本体・モデル用ArmorStandとも)は元のサイズの
+ * 小さい箱のままなので、見た目の中心を狙ってもクライアントの時点でヒットせず、
+ * イベント自体が発火しない({@code /cmob build}等のコマンドが正確なレイキャストでは
+ * 使えなかったのと同じ理由)。代わりに、素手での空振り右クリック({@code PlayerInteractEvent}
+ * の{@code RIGHT_CLICK_AIR})をフックし、{@link MobManager#findNearestInView}と同じ
+ * 視線コーン検索で狙っている先を判定する。
  */
 public class PetInfoListener implements Listener {
+
+    /** 情報表示として「狙っている」とみなす最大距離(ブロック) */
+    private static final double RANGE = 6.0;
+    /** 視線からこの角度(度)以内 */
+    private static final double ANGLE_DEGREES = 20.0;
 
     private final MobManager mobManager;
 
@@ -30,14 +41,16 @@ public class PetInfoListener implements Listener {
     }
 
     @EventHandler
-    public void onInteract(PlayerInteractEntityEvent event) {
+    public void onInteract(PlayerInteractEvent event) {
         // メインハンド分だけ処理する(オフハンド分も別イベントとして発火し、二重表示になるため)
         if (event.getHand() != EquipmentSlot.HAND) return;
+        // ブロックが手前にあると別の操作(チェストを開く等)である可能性が高いので、
+        // 何もない方向への空振り右クリックだけを対象にする
+        if (event.getAction() != Action.RIGHT_CLICK_AIR) return;
 
-        CustomMobInstance instance = mobManager.getInstance(event.getRightClicked());
+        CustomMobInstance instance = mobManager.findNearestInView(event.getPlayer(), RANGE, ANGLE_DEGREES);
         if (instance == null) return;
 
-        event.setCancelled(true); // バニラの騎乗・リード等の副作用を防ぐ
         showInfo(event.getPlayer(), instance);
     }
 
