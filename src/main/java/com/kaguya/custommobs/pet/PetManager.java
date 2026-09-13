@@ -20,10 +20,10 @@ import java.util.logging.Level;
  * ペットのテイム・解放を担当する。DB書き込みは非同期、Mob/PDCへの反映はメインスレッドで行う
  * (Bukkit APIはメインスレッド以外から呼べないため)。
  * <p>
- * {@link BuildProgressListener} も実装し、建築ジョブの進行(cm_pet_build_jobs)の
+ * {@link MobLifecycleListener} も実装し、建築ジョブの進行(cm_pet_build_jobs)の
  * 保存・再開も担う。
  */
-public class PetManager implements BuildProgressListener {
+public class PetManager implements MobLifecycleListener {
 
     /**
      * 所有者チェックを飛ばして他人のペットも操作できる管理者用権限。
@@ -212,6 +212,33 @@ public class PetManager implements BuildProgressListener {
                 instance.setActiveBuild(new BuildJob(blueprint, origin, finalProgress.listingId(), finalProgress.nextIndex()));
             });
         });
+    }
+
+    /**
+     * 所有者ありのインスタンスがMobManagerから取り除かれた直後に呼ばれる。死因は問わない
+     * (通常の死亡はもちろん、/killallのようにEntityDeathEventを経由せず直接消す外部
+     * コマンドや、/cmob cleanupでの強制削除でも通る)。cm_pets/cm_pet_build_jobsの
+     * レコードがこれまで死亡時に一切消えていなかった(/cmob releaseでしか消えなかった)
+     * ため、死んだペットが永久にDB上の所有物として残り続けるバグがあった。
+     */
+    @Override
+    public void onInstanceRemoved(CustomMobInstance instance) {
+        UUID mobUuid = instance.getEntity().getUniqueId();
+        if (database.isReady()) {
+            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+                try {
+                    database.deletePet(mobUuid);
+                    database.deleteBuildProgress(mobUuid);
+                } catch (SQLException e) {
+                    plugin.getLogger().log(Level.WARNING, "消滅したペットの記録削除に失敗しました", e);
+                }
+            });
+        }
+
+        Player owner = plugin.getServer().getPlayer(instance.getOwnerUuid());
+        if (owner != null) {
+            owner.sendMessage("§c" + instance.getDefinition().getDisplayName() + " §cが消滅しました");
+        }
     }
 
     /**

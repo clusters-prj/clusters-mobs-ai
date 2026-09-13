@@ -9,7 +9,7 @@ import com.kaguya.custommobs.model.ModelConfig;
 import com.kaguya.custommobs.integration.CoreProtectLogger;
 import com.kaguya.custommobs.pet.Blueprint;
 import com.kaguya.custommobs.pet.BuildJob;
-import com.kaguya.custommobs.pet.BuildProgressListener;
+import com.kaguya.custommobs.pet.MobLifecycleListener;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -59,7 +59,7 @@ public class MobManager {
     /** config.yml の pets.build-interval-ticks。デフォルト値はロード失敗時のフォールバック */
     private long buildIntervalTicks = 5;
     /** 建築の進行をDBに反映するフック。ペット機能が無効(DB未接続)ならnullのまま */
-    private BuildProgressListener buildProgressListener;
+    private MobLifecycleListener mobLifecycleListener;
     private final CoreProtectLogger coreProtectLogger;
 
     private long tickCounter = 0;
@@ -73,8 +73,8 @@ public class MobManager {
         registerDefaultBehaviors();
     }
 
-    public void setBuildProgressListener(BuildProgressListener listener) {
-        this.buildProgressListener = listener;
+    public void setMobLifecycleListener(MobLifecycleListener listener) {
+        this.mobLifecycleListener = listener;
     }
 
     public void setBuildIntervalTicks(long ticks) {
@@ -203,8 +203,8 @@ public class MobManager {
         }
 
         activeMobs.put(entity.getUniqueId(), instance);
-        if (buildProgressListener != null) {
-            buildProgressListener.onAdopted(instance);
+        if (mobLifecycleListener != null) {
+            mobLifecycleListener.onAdopted(instance);
         }
         return instance;
     }
@@ -418,11 +418,11 @@ public class MobManager {
         job.markPlaced(tickCounter);
         job.advance();
 
-        if (buildProgressListener != null) {
+        if (mobLifecycleListener != null) {
             if (job.isDone()) {
-                buildProgressListener.onBuildFinished(self.getUniqueId());
+                mobLifecycleListener.onBuildFinished(self.getUniqueId());
             } else if (ownerUuid != null) {
-                buildProgressListener.onBlockPlaced(self.getUniqueId(), ownerUuid, job.getListingId(), origin, job.getNextIndex());
+                mobLifecycleListener.onBlockPlaced(self.getUniqueId(), ownerUuid, job.getListingId(), origin, job.getNextIndex());
             }
         }
 
@@ -537,8 +537,17 @@ public class MobManager {
 
     public void removeInstance(UUID entityId) {
         CustomMobInstance instance = activeMobs.remove(entityId);
-        if (instance != null && instance.getModelStand() != null) {
+        if (instance == null) return;
+
+        if (instance.getModelStand() != null) {
             instance.getModelStand().remove();
+        }
+
+        // 死因は問わない(通常の死亡はもちろん、/killallのようにEntityDeathEventを
+        // 経由せず直接消すコマンドでも、チャンクアンロードによる無効化でも、ここは必ず通る)。
+        // 未所有のMobはDB上に何もないので、所有者がいるときだけ通知する。
+        if (instance.getOwnerUuid() != null && mobLifecycleListener != null) {
+            mobLifecycleListener.onInstanceRemoved(instance);
         }
     }
 
