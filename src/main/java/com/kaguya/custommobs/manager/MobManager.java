@@ -474,6 +474,14 @@ public class MobManager {
      * ヒットしないので、右クリックのエンティティ対象イベント自体が発火しない)。
      * 代わりに、視線の向きから一定角度以内にいる最も近いインスタンスを「狙っている」とみなす。
      * {@code /cmob tame}等のコマンドと、右クリック情報表示の両方から共通で使う。
+     * <p>
+     * 角度の基準点は本体(見えない)の中心ではなく、モデルのy-offset分だけ上に補正した
+     * 「見た目上、実際に浮いて見える位置」にする。本体の中心を基準にすると、近距離では
+     * 同じ絶対オフセット(y-offsetぶん)でも角度誤差が急激に大きくなる
+     * (例: 1ブロックのズレは6ブロック先では約9度だが、2ブロック先では約27度にもなる)。
+     * `/cmob build`はやや離れた距離での使用が主だったため本体中心基準でも通っていたが、
+     * 右クリックのような至近距離での操作では本体中心基準だと閾値をすぐ超えてしまい、
+     * 見た目の中心を狙っているのに何も見つからなくなっていた。
      */
     public CustomMobInstance findNearestInView(org.bukkit.entity.Player player, double maxRange, double maxAngleDegrees) {
         Location eye = player.getEyeLocation();
@@ -485,8 +493,10 @@ public class MobManager {
             LivingEntity entity = instance.getEntity();
             if (!entity.getWorld().equals(eye.getWorld())) continue;
 
+            ModelConfig model = instance.getDefinition().getModel();
+            double aimHeight = model != null ? model.getYOffset() + 1.0 : entity.getHeight() / 2.0;
             org.bukkit.util.Vector toMob = entity.getLocation().toVector()
-                    .add(new org.bukkit.util.Vector(0, entity.getHeight() / 2.0, 0))
+                    .add(new org.bukkit.util.Vector(0, aimHeight, 0))
                     .subtract(eye.toVector());
             double dist = toMob.length();
             if (dist < 1.0E-4 || dist > maxRange) continue;

@@ -30,9 +30,10 @@ import java.util.Locale;
 public class PetInfoListener implements Listener {
 
     /** 情報表示として「狙っている」とみなす最大距離(ブロック) */
-    private static final double RANGE = 6.0;
-    /** 視線からこの角度(度)以内 */
-    private static final double ANGLE_DEGREES = 20.0;
+    private static final double RANGE = 8.0;
+    /** 視線からこの角度(度)以内。右クリックは至近距離での使用が主なので、CustomMobCommandの
+     * 角度(25度)よりさらに余裕を持たせておく */
+    private static final double ANGLE_DEGREES = 30.0;
 
     private final MobManager mobManager;
 
