@@ -2,7 +2,9 @@ package com.kaguya.custommobs.manager;
 
 import com.kaguya.custommobs.gui.PetMenu;
 import com.kaguya.custommobs.model.CustomMobInstance;
+import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -24,10 +26,16 @@ import org.bukkit.inventory.EquipmentSlot;
  * <ul>
  *   <li>{@link PlayerArmorStandManipulateEvent} — モデル用ArmorStandの箱に直接ヒットした場合
  *   <li>{@link PlayerInteractEntityEvent} — 本体(の元のMobサイズの箱)に直接ヒットした場合
- *   <li>{@code PlayerInteractEvent}の{@code RIGHT_CLICK_AIR} — どちらの箱にもヒットしない
- *       大きいモデルの場合。{@link MobManager#findNearestInView}の視線コーン検索で狙っている
- *       先を判定するフォールバック
+ *   <li>{@code PlayerInteractEvent}の{@code RIGHT_CLICK_AIR}/{@code RIGHT_CLICK_BLOCK} —
+ *       どちらの箱にもヒットしない大きいモデルの場合。{@link MobManager#findNearestInView}の
+ *       視線コーン検索で狙っている先を判定するフォールバック
  * </ul>
+ * <p>
+ * {@code RIGHT_CLICK_BLOCK}も見ているのは、視線の先にペットがいても、その手前(や奥)に
+ * 地面・柵・看板などの何気ないブロックが1つでも視線上にあると、クライアントはそちらへの
+ * ブロック対象クリックとして送ってしまい、空振り(AIR)にならないため。ペットより明らかに
+ * 手前のブロックを触ろうとしている場合はそちらを優先し、ペットの方が近ければブロック側の
+ * 操作をキャンセルしてメニューを開く。
  */
 public class PetInfoListener implements Listener {
 
@@ -49,14 +57,25 @@ public class PetInfoListener implements Listener {
     public void onInteract(PlayerInteractEvent event) {
         // メインハンド分だけ処理する(オフハンド分も別イベントとして発火し、二重表示になるため)
         if (event.getHand() != EquipmentSlot.HAND) return;
-        // ブロックが手前にあると別の操作(チェストを開く等)である可能性が高いので、
-        // 何もない方向への空振り右クリックだけを対象にする
-        if (event.getAction() != Action.RIGHT_CLICK_AIR) return;
+        Action action = event.getAction();
+        if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) return;
 
-        CustomMobInstance instance = mobManager.findNearestInView(event.getPlayer(), RANGE, ANGLE_DEGREES);
+        Player player = event.getPlayer();
+        CustomMobInstance instance = mobManager.findNearestInView(player, RANGE, ANGLE_DEGREES);
         if (instance == null) return;
 
-        petMenu.open(event.getPlayer(), instance);
+        if (action == Action.RIGHT_CLICK_BLOCK) {
+            Block clicked = event.getClickedBlock();
+            if (clicked != null) {
+                double blockDist = player.getEyeLocation().distance(clicked.getLocation().add(0.5, 0.5, 0.5));
+                double mobDist = player.getEyeLocation().distance(instance.getEntity().getLocation());
+                // ブロックの方が明らかに近ければ、そちらを本当に触ろうとしている
+                if (blockDist < mobDist - 1.0) return;
+            }
+            event.setCancelled(true); // 横取りしたので、チェスト等が開くのは防ぐ
+        }
+
+        petMenu.open(player, instance);
     }
 
     /** モデル用ArmorStandの箱を直接右クリックした場合。ModelStandGuardListenerが操作自体は
