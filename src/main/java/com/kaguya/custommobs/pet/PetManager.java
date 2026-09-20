@@ -55,7 +55,7 @@ public class PetManager implements MobLifecycleListener {
      * 原点はプレイヤーの現在地。所有権チェックはDB問い合わせなので非同期で行う。
      */
     public void assignBuild(Player player, CustomMobInstance target, int listingId) {
-        if (!target.isOwnedBy(player.getUniqueId()) && !player.hasPermission(ADMIN_OVERRIDE_PERMISSION)) {
+        if (!canManage(player, target)) {
             player.sendMessage("§c自分のペットではありません");
             return;
         }
@@ -149,6 +149,48 @@ public class PetManager implements MobLifecycleListener {
 
     public boolean isDatabaseReady() {
         return database.isReady();
+    }
+
+    /** 自分のペットか、他人のペットでも管理者権限で操作できるか */
+    public boolean canManage(Player player, CustomMobInstance target) {
+        return target.isOwnedBy(player.getUniqueId()) || player.hasPermission(ADMIN_OVERRIDE_PERMISSION);
+    }
+
+    /** ペットメニューGUIの「ついてきて」トグル用 */
+    public void setFollowing(Player player, CustomMobInstance target, boolean following) {
+        if (!canManage(player, target)) {
+            player.sendMessage("§c自分のペットではありません");
+            return;
+        }
+        target.setFollowingOwner(following);
+        player.sendMessage(following
+                ? "§a" + target.getDefinition().getDisplayName() + " §aがついてくるようになりました"
+                : "§7" + target.getDefinition().getDisplayName() + " §7の追従を解除しました");
+    }
+
+    /** ペットメニューGUIの設計図一覧用。/cmob mypets の listOwnedAsync と同じ非同期パターン */
+    public void listOwnedBlueprintsAsync(UUID ownerUuid, BlueprintListCallback callback) {
+        if (!database.isReady()) {
+            callback.onResult(List.of(), null);
+            return;
+        }
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            List<PetDatabase.BlueprintListing> blueprints = null;
+            SQLException error = null;
+            try {
+                blueprints = database.listOwnedBlueprints(ownerUuid);
+            } catch (SQLException e) {
+                error = e;
+                plugin.getLogger().log(Level.WARNING, "所有設計図一覧の取得に失敗しました", e);
+            }
+            List<PetDatabase.BlueprintListing> finalBlueprints = blueprints != null ? blueprints : List.of();
+            SQLException finalError = error;
+            plugin.getServer().getScheduler().runTask(plugin, () -> callback.onResult(finalBlueprints, finalError));
+        });
+    }
+
+    public interface BlueprintListCallback {
+        void onResult(List<PetDatabase.BlueprintListing> blueprints, SQLException error);
     }
 
     /** ブロックを1つ置くたびにMobManagerから呼ばれる。進行状況をDBに書いておく(非同期) */
@@ -312,7 +354,7 @@ public class PetManager implements MobLifecycleListener {
     }
 
     public void release(Player player, CustomMobInstance target) {
-        if (!target.isOwnedBy(player.getUniqueId()) && !player.hasPermission(ADMIN_OVERRIDE_PERMISSION)) {
+        if (!canManage(player, target)) {
             player.sendMessage("§c自分のペットではありません");
             return;
         }

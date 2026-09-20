@@ -18,6 +18,8 @@ public class CustomMobInstance {
     private UUID ownerUuid;
     // 実行中の建築ジョブ。mobs.ymlの静的なaiリストとは別に、コマンドで動的に割り当てる
     private BuildJob activeBuild;
+    // 所有者への追従ON/OFF。メモリ上のみの状態(再起動で解除されても致命的ではないため永続化しない)
+    private boolean followingOwner = false;
 
     public CustomMobInstance(MobDefinition definition, LivingEntity entity) {
         this.definition = definition;
@@ -36,6 +38,9 @@ public class CustomMobInstance {
 
     public BuildJob getActiveBuild() { return activeBuild; }
     public void setActiveBuild(BuildJob activeBuild) { this.activeBuild = activeBuild; }
+
+    public boolean isFollowingOwner() { return followingOwner; }
+    public void setFollowingOwner(boolean followingOwner) { this.followingOwner = followingOwner; }
 
     public boolean isReady(String key, long cooldownTicks, long nowTick) {
         Long last = cooldowns.get(key);

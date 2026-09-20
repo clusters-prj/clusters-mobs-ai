@@ -1,6 +1,7 @@
 package com.kaguya.custommobs.manager;
 
 import com.kaguya.custommobs.ai.AiBehavior;
+import com.kaguya.custommobs.ai.FollowOwnerBehavior;
 import com.kaguya.custommobs.ai.MeleeAttackBehavior;
 import com.kaguya.custommobs.model.AiBehaviorConfig;
 import com.kaguya.custommobs.model.CustomMobInstance;
@@ -61,6 +62,7 @@ public class MobManager {
     /** 建築の進行をDBに反映するフック。ペット機能が無効(DB未接続)ならnullのまま */
     private MobLifecycleListener mobLifecycleListener;
     private final CoreProtectLogger coreProtectLogger;
+    private final FollowOwnerBehavior followOwnerBehavior = new FollowOwnerBehavior();
 
     private long tickCounter = 0;
 
@@ -364,6 +366,10 @@ public class MobManager {
 
             if (instance.getActiveBuild() != null) {
                 processBuildJob(instance);
+            }
+
+            if (instance.isFollowingOwner()) {
+                followOwnerBehavior.tick(instance, tickCounter);
             }
         }
     }

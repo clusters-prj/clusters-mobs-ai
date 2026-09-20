@@ -1,6 +1,7 @@
 package com.kaguya.custommobs;
 
 import com.kaguya.custommobs.database.PetDatabase;
+import com.kaguya.custommobs.gui.PetMenu;
 import com.kaguya.custommobs.manager.MobDeathListener;
 import com.kaguya.custommobs.manager.MobEntityLoadListener;
 import com.kaguya.custommobs.manager.MobManager;
@@ -35,10 +36,13 @@ public class CustomMobsPlugin extends JavaPlugin {
         mobManager.setMobLifecycleListener(petManager);
         petManager.syncCatalog();
 
+        PetMenu petMenu = new PetMenu(this, petManager);
+
         getServer().getPluginManager().registerEvents(new MobDeathListener(mobManager), this);
         getServer().getPluginManager().registerEvents(new MobEntityLoadListener(this, mobManager), this);
         getServer().getPluginManager().registerEvents(new ModelStandGuardListener(mobManager), this);
-        getServer().getPluginManager().registerEvents(new PetInfoListener(mobManager), this);
+        getServer().getPluginManager().registerEvents(petMenu, this);
+        getServer().getPluginManager().registerEvents(new PetInfoListener(mobManager, petMenu), this);
 
         PluginCommand command = getCommand("cmob");
         if (command != null) {

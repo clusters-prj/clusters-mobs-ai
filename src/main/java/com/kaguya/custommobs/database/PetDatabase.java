@@ -271,6 +271,39 @@ public class PetDatabase {
     public record BlueprintRow(String json, String title) {
     }
 
+    /**
+     * プレイヤーが所有する設計図の一覧(ID・タイトルのみ)。ペットメニューGUIの設計図ボタン一覧に使う。
+     * 所有権判定は{@link #findOwnedBlueprintJson}と同じくWebアカウント単位(account_links)で行う。
+     */
+    public java.util.List<BlueprintListing> listOwnedBlueprints(UUID ownerUuid) throws SQLException {
+        java.util.List<BlueprintListing> result = new java.util.ArrayList<>();
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT DISTINCT l.id, l.title FROM marketplace_nfts n " +
+                     "JOIN marketplace_listings l ON n.listing_id = l.id " +
+                     "WHERE l.item_type = 'blueprint' " +
+                     "AND (" +
+                     "  n.owner_uuid = ? " +
+                     "  OR n.owner_uuid IN (" +
+                     "    SELECT al2.minecraft_uuid FROM account_links al1 " +
+                     "    JOIN account_links al2 ON al2.web_user_id = al1.web_user_id " +
+                     "    WHERE al1.minecraft_uuid = ?" +
+                     "  )" +
+                     ") ORDER BY l.title")) {
+            ps.setString(1, ownerUuid.toString());
+            ps.setString(2, ownerUuid.toString());
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new BlueprintListing(rs.getInt("id"), rs.getString("title")));
+                }
+            }
+        }
+        return result;
+    }
+
+    public record BlueprintListing(int id, String title) {
+    }
+
     /** 建築ジョブの進行状況を保存する(INSERTなら開始、既存なら進捗の更新)。ブロックを置くたびに呼ぶ想定 */
     public void saveBuildProgress(UUID mobUuid, UUID ownerUuid, int listingId, org.bukkit.Location origin, int nextIndex)
             throws SQLException {

@@ -1,31 +1,33 @@
 package com.kaguya.custommobs.manager;
 
+import com.kaguya.custommobs.gui.PetMenu;
 import com.kaguya.custommobs.model.CustomMobInstance;
-import com.kaguya.custommobs.model.StatBlock;
-import com.kaguya.custommobs.pet.BuildJob;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
-import java.util.Locale;
-
 /**
- * カスタムMobに向かって右クリックすると、所有者・HP・種別などを表示する。
+ * カスタムMobに向かって右クリックすると、所有者・HP・種別などを表示するペットメニューGUIを開く。
  * <p>
- * {@code PlayerInteractEntityEvent}(実際にクリックしたエンティティを渡すイベント)は
- * 使わない。あれはクライアント側で実際にエンティティの当たり判定にヒットしないと
- * そもそも発火しないが、見た目上の巨大なモデルはリソースパック側でアイテムを引き伸ばして
- * 描画しているだけで、実際の当たり判定(本体・モデル用ArmorStandとも)は元のサイズの
- * 小さい箱のままなので、見た目の中心を狙ってもクライアントの時点でヒットせず、
- * イベント自体が発火しない({@code /cmob build}等のコマンドが正確なレイキャストでは
- * 使えなかったのと同じ理由)。代わりに、素手での空振り右クリック({@code PlayerInteractEvent}
- * の{@code RIGHT_CLICK_AIR})をフックし、{@link MobManager#findNearestInView}と同じ
- * 視線コーン検索で狙っている先を判定する。
+ * モデルの見た目は巨大でも、実際の当たり判定(本体・モデル用ArmorStandとも)は元のサイズの
+ * 小さい箱のままなので、見た目の中心を狙ったクリックが実際の箱にヒットするかどうかは
+ * モデルの大きさ次第で変わる。狙っている先がその小さい箱に入っているときは、クライアントは
+ * 空振りではなくエンティティ対象のクリックとして送るため、実際には3種類のイベントを
+ * 拾い分ける必要がある(当初は{@code RIGHT_CLICK_AIR}だけで済むと思っていたが、
+ * 元のMobサイズに近いモデルではほぼ確実に実際の箱を直接ヒットしてしまい、
+ * それらのイベントを無視していたぶん表示されていなかった):
+ * <ul>
+ *   <li>{@link PlayerArmorStandManipulateEvent} — モデル用ArmorStandの箱に直接ヒットした場合
+ *   <li>{@link PlayerInteractEntityEvent} — 本体(の元のMobサイズの箱)に直接ヒットした場合
+ *   <li>{@code PlayerInteractEvent}の{@code RIGHT_CLICK_AIR} — どちらの箱にもヒットしない
+ *       大きいモデルの場合。{@link MobManager#findNearestInView}の視線コーン検索で狙っている
+ *       先を判定するフォールバック
+ * </ul>
  */
 public class PetInfoListener implements Listener {
 
@@ -36,9 +38,11 @@ public class PetInfoListener implements Listener {
     private static final double ANGLE_DEGREES = 30.0;
 
     private final MobManager mobManager;
+    private final PetMenu petMenu;
 
-    public PetInfoListener(MobManager mobManager) {
+    public PetInfoListener(MobManager mobManager, PetMenu petMenu) {
         this.mobManager = mobManager;
+        this.petMenu = petMenu;
     }
 
     @EventHandler
@@ -52,29 +56,31 @@ public class PetInfoListener implements Listener {
         CustomMobInstance instance = mobManager.findNearestInView(event.getPlayer(), RANGE, ANGLE_DEGREES);
         if (instance == null) return;
 
-        showInfo(event.getPlayer(), instance);
+        petMenu.open(event.getPlayer(), instance);
     }
 
-    private void showInfo(Player player, CustomMobInstance instance) {
-        LivingEntity entity = instance.getEntity();
-        StatBlock stats = instance.getDefinition().getStats();
+    /** モデル用ArmorStandの箱を直接右クリックした場合。ModelStandGuardListenerが操作自体は
+     * 別途キャンセルするので、ここではメニューを開くだけを行う */
+    @EventHandler
+    public void onManipulate(PlayerArmorStandManipulateEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) return;
 
-        player.sendMessage("§e--- " + instance.getDefinition().getDisplayName() + " §e---");
-        player.sendMessage("§7種別: §f" + instance.getDefinition().getId());
-        player.sendMessage(String.format(Locale.ROOT, "§7HP: §f%.1f / %.1f", entity.getHealth(), stats.getHealth()));
+        CustomMobInstance instance = mobManager.getInstance(event.getRightClicked());
+        if (instance == null) return;
 
-        var ownerUuid = instance.getOwnerUuid();
-        if (ownerUuid == null) {
-            player.sendMessage("§7所有者: §8未所有");
-        } else {
-            String ownerName = Bukkit.getOfflinePlayer(ownerUuid).getName();
-            player.sendMessage("§7所有者: §f" + (ownerName != null ? ownerName : ownerUuid));
-        }
+        petMenu.open(event.getPlayer(), instance);
+    }
 
-        BuildJob job = instance.getActiveBuild();
-        if (job != null) {
-            player.sendMessage("§7建築中: §f" + job.getNextIndex() + " / " + job.getBlueprint().getBlocks().size()
-                    + " §7(設計図「" + job.getBlueprint().getName() + "」)");
-        }
+    /** 本体(元のMobサイズの箱)を直接右クリックした場合。ArmorStand相手はPlayerArmorStandManipulateEvent
+     * 側で別途処理するので、二重表示を避けるためここでは除外する */
+    @EventHandler
+    public void onInteractEntity(PlayerInteractEntityEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) return;
+        if (event.getRightClicked() instanceof ArmorStand) return;
+
+        CustomMobInstance instance = mobManager.getInstance(event.getRightClicked());
+        if (instance == null) return;
+
+        petMenu.open(event.getPlayer(), instance);
     }
 }
