@@ -1,14 +1,14 @@
 package com.kaguya.custommobs.manager;
 
 import com.kaguya.custommobs.model.CustomMobInstance;
-import org.bukkit.Color;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Particle;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.util.BoundingBox;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -20,6 +20,10 @@ import java.util.UUID;
  * 補正込みの仮想的な点で、実体の当たり判定ではないためF3+Bには一切映らない。
  * これを実機で目視しながら調整できるように、狙い先の点と実際の当たり判定箱の両方を
  * パーティクルで描画する。
+ * <p>
+ * Bukkit APIの{@code Player#spawnParticle}/{@code World#spawnParticle}経由では
+ * (原因不明のまま)実機で一切見えなかったため、実際に見えることを確認済みの
+ * バニラ{@code /particle ... force}コマンドをコンソールから発行する形にしている。
  * <ul>
  *   <li>赤い点線の箱: 本体(見えないMob本体)の実際の当たり判定
  *   <li>青い点線の箱: モデル用ArmorStandの実際の当たり判定
@@ -31,7 +35,7 @@ public class AimDebugVisualizer {
     /** 表示対象を探す範囲(ブロック) */
     private static final double RANGE = 15.0;
     /** 箱の辺に沿ってパーティクルを打つ間隔(ブロック) */
-    private static final double STEP = 0.2;
+    private static final double STEP = 0.3;
 
     private final MobManager mobManager;
     private final Set<UUID> enabled = new HashSet<>();
@@ -58,77 +62,66 @@ public class AimDebugVisualizer {
         return count;
     }
 
-    /** 原因切り分け用の一時カウンタ。tick()が実際に描画コードへ到達しているかをチャットで確認する */
-    private long tickCount = 0;
-
     /** BukkitSchedulerから数tickおきに呼ばれる想定 */
     public void tick() {
         if (enabled.isEmpty()) return;
-        tickCount++;
 
         for (UUID uuid : enabled) {
-            Player player = org.bukkit.Bukkit.getPlayer(uuid);
+            Player player = Bukkit.getPlayer(uuid);
             if (player == null || !player.isOnline()) continue;
 
-            int drawn = 0;
-            Location lastAim = null;
             for (CustomMobInstance instance : mobManager.getActiveInstances()) {
                 if (!instance.getEntity().getWorld().equals(player.getWorld())) continue;
                 if (instance.getEntity().getLocation().distanceSquared(player.getLocation()) > RANGE * RANGE) continue;
 
-                drawBox(player, instance.getEntity().getBoundingBox(), Color.RED);
+                drawBox(player, instance.getEntity().getBoundingBox(), "1,0,0");
                 ArmorStand stand = instance.getModelStand();
                 if (stand != null && stand.isValid()) {
-                    drawBox(player, stand.getBoundingBox(), Color.BLUE);
+                    drawBox(player, stand.getBoundingBox(), "0,0.4,1");
                 }
 
                 Location aim = mobManager.getAimPoint(instance);
-                player.getWorld().spawnParticle(Particle.END_ROD, aim, 20, 0.05, 0.05, 0.05, 0.01);
-                drawn++;
-                lastAim = aim;
-            }
-
-            // 原因切り分け用の一時ログ。tick()が実際に描画まで到達しているか・座標が
-            // おかしくないかを目で確認するため(毎tick出すとスパムになるので5回に1回)
-            if (tickCount % 5 == 0) {
-                player.sendMessage("§8[debugaim-diag] drawn=" + drawn + " aim=" + (lastAim != null
-                        ? String.format(java.util.Locale.ROOT, "%.2f,%.2f,%.2f", lastAim.getX(), lastAim.getY(), lastAim.getZ())
-                        : "none") + " myLoc=" + String.format(java.util.Locale.ROOT, "%.2f,%.2f,%.2f",
-                        player.getLocation().getX(), player.getLocation().getY(), player.getLocation().getZ()));
+                dispatch(String.format(Locale.ROOT,
+                        "particle end_rod %.3f %.3f %.3f 0.05 0.05 0.05 0.01 15 force %s",
+                        aim.getX(), aim.getY(), aim.getZ(), player.getName()));
             }
         }
     }
 
-    private void drawBox(Player player, BoundingBox box, Color color) {
-        Particle.DustOptions options = new Particle.DustOptions(color, 3.0f);
+    private void drawBox(Player player, BoundingBox box, String rgb) {
         double minX = box.getMinX(), minY = box.getMinY(), minZ = box.getMinZ();
         double maxX = box.getMaxX(), maxY = box.getMaxY(), maxZ = box.getMaxZ();
 
         // X方向の4辺
-        drawEdge(player, minX, minY, minZ, maxX, minY, minZ, options);
-        drawEdge(player, minX, minY, maxZ, maxX, minY, maxZ, options);
-        drawEdge(player, minX, maxY, minZ, maxX, maxY, minZ, options);
-        drawEdge(player, minX, maxY, maxZ, maxX, maxY, maxZ, options);
+        drawEdge(player, minX, minY, minZ, maxX, minY, minZ, rgb);
+        drawEdge(player, minX, minY, maxZ, maxX, minY, maxZ, rgb);
+        drawEdge(player, minX, maxY, minZ, maxX, maxY, minZ, rgb);
+        drawEdge(player, minX, maxY, maxZ, maxX, maxY, maxZ, rgb);
         // Y方向の4辺
-        drawEdge(player, minX, minY, minZ, minX, maxY, minZ, options);
-        drawEdge(player, maxX, minY, minZ, maxX, maxY, minZ, options);
-        drawEdge(player, minX, minY, maxZ, minX, maxY, maxZ, options);
-        drawEdge(player, maxX, minY, maxZ, maxX, maxY, maxZ, options);
+        drawEdge(player, minX, minY, minZ, minX, maxY, minZ, rgb);
+        drawEdge(player, maxX, minY, minZ, maxX, maxY, minZ, rgb);
+        drawEdge(player, minX, minY, maxZ, minX, maxY, maxZ, rgb);
+        drawEdge(player, maxX, minY, maxZ, maxX, maxY, maxZ, rgb);
         // Z方向の4辺
-        drawEdge(player, minX, minY, minZ, minX, minY, maxZ, options);
-        drawEdge(player, maxX, minY, minZ, maxX, minY, maxZ, options);
-        drawEdge(player, minX, maxY, minZ, minX, maxY, maxZ, options);
-        drawEdge(player, maxX, maxY, minZ, maxX, maxY, maxZ, options);
+        drawEdge(player, minX, minY, minZ, minX, minY, maxZ, rgb);
+        drawEdge(player, maxX, minY, minZ, maxX, minY, maxZ, rgb);
+        drawEdge(player, minX, maxY, minZ, minX, maxY, maxZ, rgb);
+        drawEdge(player, maxX, maxY, minZ, maxX, maxY, maxZ, rgb);
     }
 
-    private void drawEdge(Player player, double x1, double y1, double z1, double x2, double y2, double z2,
-                           Particle.DustOptions options) {
+    private void drawEdge(Player player, double x1, double y1, double z1, double x2, double y2, double z2, String rgb) {
         double dx = x2 - x1, dy = y2 - y1, dz = z2 - z1;
         double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
         int steps = Math.max(1, (int) (length / STEP));
         for (int i = 0; i <= steps; i++) {
             double t = (double) i / steps;
-            player.getWorld().spawnParticle(Particle.REDSTONE, x1 + dx * t, y1 + dy * t, z1 + dz * t, 1, 0, 0, 0, 0, options);
+            dispatch(String.format(Locale.ROOT,
+                    "particle dust{color:[%s],scale:2.0} %.3f %.3f %.3f 0 0 0 0 1 force %s",
+                    rgb, x1 + dx * t, y1 + dy * t, z1 + dz * t, player.getName()));
         }
+    }
+
+    private void dispatch(String command) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
     }
 }
