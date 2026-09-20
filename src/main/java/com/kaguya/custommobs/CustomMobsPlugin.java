@@ -2,6 +2,7 @@ package com.kaguya.custommobs;
 
 import com.kaguya.custommobs.database.PetDatabase;
 import com.kaguya.custommobs.gui.PetMenu;
+import com.kaguya.custommobs.manager.AimDebugVisualizer;
 import com.kaguya.custommobs.manager.MobDeathListener;
 import com.kaguya.custommobs.manager.MobEntityLoadListener;
 import com.kaguya.custommobs.manager.MobManager;
@@ -44,9 +45,12 @@ public class CustomMobsPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(petMenu, this);
         getServer().getPluginManager().registerEvents(new PetInfoListener(mobManager, petMenu), this);
 
+        AimDebugVisualizer aimDebugVisualizer = new AimDebugVisualizer(mobManager);
+        getServer().getScheduler().runTaskTimer(this, aimDebugVisualizer::tick, 1L, 4L);
+
         PluginCommand command = getCommand("cmob");
         if (command != null) {
-            command.setExecutor(new CustomMobCommand(mobManager, petManager));
+            command.setExecutor(new CustomMobCommand(mobManager, petManager, aimDebugVisualizer));
         } else {
             getLogger().warning("plugin.yml に cmob コマンドが定義されていません");
         }

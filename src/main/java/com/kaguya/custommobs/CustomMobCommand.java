@@ -1,6 +1,7 @@
 package com.kaguya.custommobs;
 
 import com.kaguya.custommobs.database.PetDatabase;
+import com.kaguya.custommobs.manager.AimDebugVisualizer;
 import com.kaguya.custommobs.manager.MobManager;
 import com.kaguya.custommobs.model.CustomMobInstance;
 import com.kaguya.custommobs.pet.PetManager;
@@ -31,9 +32,9 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
      * 素通りしてしまう。{@link com.kaguya.custommobs.pet.PetManager}参照)。
      */
     private static final String PET_PERMISSION = "custommobs.pet";
-    private static final Set<String> ADMIN_SUB_COMMANDS = Set.of("spawn", "reload", "list", "cleanup");
+    private static final Set<String> ADMIN_SUB_COMMANDS = Set.of("spawn", "reload", "list", "cleanup", "debugaim");
     private static final List<String> SUB_COMMANDS =
-            List.of("spawn", "reload", "list", "cleanup", "tame", "release", "build", "mypets", "claim", "recall");
+            List.of("spawn", "reload", "list", "cleanup", "debugaim", "tame", "release", "build", "mypets", "claim", "recall");
 
     /** 視線でペットを狙う際の最大距離(ブロック) */
     private static final double TARGET_RANGE = 8.0;
@@ -42,10 +43,12 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
 
     private final MobManager mobManager;
     private final PetManager petManager;
+    private final AimDebugVisualizer aimDebugVisualizer;
 
-    public CustomMobCommand(MobManager mobManager, PetManager petManager) {
+    public CustomMobCommand(MobManager mobManager, PetManager petManager, AimDebugVisualizer aimDebugVisualizer) {
         this.mobManager = mobManager;
         this.petManager = petManager;
+        this.aimDebugVisualizer = aimDebugVisualizer;
     }
 
     @Override
@@ -78,6 +81,7 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
                 }
             }
             case "cleanup" -> handleCleanup(sender, args);
+            case "debugaim" -> handleDebugAim(sender);
             case "tame" -> handleTame(sender);
             case "release" -> handleRelease(sender);
             case "build" -> handleBuild(sender, args);
@@ -95,6 +99,7 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage("§7 /cmob reload");
         sender.sendMessage("§7 /cmob list");
         sender.sendMessage("§7 /cmob cleanup [mobId]  §8- 読み込み済みチャンクのカスタムMobを掃除");
+        sender.sendMessage("§7 /cmob debugaim  §8- 視線判定の狙い先(y-offset/aim-forward-offset補正込み)と当たり判定箱をパーティクルで表示");
         sender.sendMessage("§7 /cmob tame  §8- 視線の先のMobをテイム");
         sender.sendMessage("§7 /cmob release  §8- 視線の先の自分のペットを手放す");
         sender.sendMessage("§7 /cmob build <listingId>  §8- マーケットプレイスで購入済みの設計図で視線の先の自分のペットに建築させる");
@@ -164,6 +169,16 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage("§a読み込み済みチャンクのカスタムMobを削除しました: " + removed + "体"
                 + (filter == null ? "" : " §7(" + filter + ")"));
         sender.sendMessage("§7※ 読み込まれていないチャンクのMobは対象外です");
+    }
+
+    /** 視線判定の狙い先と当たり判定箱をパーティクル表示するデバッグ用トグル(要 custommobs.command) */
+    private void handleDebugAim(CommandSender sender) {
+        Player player = requirePlayer(sender);
+        if (player == null) return;
+        boolean nowOn = aimDebugVisualizer.toggle(player);
+        player.sendMessage(nowOn
+                ? "§a当たり判定/狙い先のデバッグ表示を有効にしました §7(赤=本体, 青=モデルStand, 白い光点=狙い先)"
+                : "§7デバッグ表示を無効にしました");
     }
 
     private void handleTame(CommandSender sender) {

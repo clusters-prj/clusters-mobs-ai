@@ -505,18 +505,7 @@ public class MobManager {
             LivingEntity entity = instance.getEntity();
             if (!entity.getWorld().equals(eye.getWorld())) continue;
 
-            ModelConfig model = instance.getDefinition().getModel();
-            double aimHeight = model != null ? model.getYOffset() + 1.0 : entity.getHeight() / 2.0;
-            Location entityLoc = entity.getLocation();
-            org.bukkit.util.Vector aimPoint = entityLoc.toVector().add(new org.bukkit.util.Vector(0, aimHeight, 0));
-            if (model != null && model.getForwardOffset() != 0.0) {
-                double yawRad = Math.toRadians(entityLoc.getYaw());
-                aimPoint.add(new org.bukkit.util.Vector(
-                        -Math.sin(yawRad) * model.getForwardOffset(),
-                        0,
-                        Math.cos(yawRad) * model.getForwardOffset()));
-            }
-            org.bukkit.util.Vector toMob = aimPoint.subtract(eye.toVector());
+            org.bukkit.util.Vector toMob = getAimPoint(instance).toVector().subtract(eye.toVector());
             double dist = toMob.length();
             if (dist < 1.0E-4 || dist > maxRange) continue;
             if (Math.toDegrees(direction.angle(toMob)) > maxAngleDegrees) continue;
@@ -527,6 +516,26 @@ public class MobManager {
             }
         }
         return nearest;
+    }
+
+    /**
+     * {@link #findNearestInView}が実際に判定に使っている「狙い先の点」(y-offset+forward-offset
+     * 補正込み)。この点は実在するエンティティ/ブロックの当たり判定ではない(コード内だけの
+     * 仮想的な点)ため、バニラの当たり判定デバッグ表示(F3+B)には映らない。
+     * {@code /cmob debugaim}でこの点にパーティクルを出し、実機で目視しながら
+     * y-offset/aim-forward-offsetを追い込めるようにするために公開している。
+     */
+    public Location getAimPoint(CustomMobInstance instance) {
+        LivingEntity entity = instance.getEntity();
+        ModelConfig model = instance.getDefinition().getModel();
+        double aimHeight = model != null ? model.getYOffset() + 1.0 : entity.getHeight() / 2.0;
+        Location entityLoc = entity.getLocation();
+        Location aimPoint = entityLoc.clone().add(0, aimHeight, 0);
+        if (model != null && model.getForwardOffset() != 0.0) {
+            double yawRad = Math.toRadians(entityLoc.getYaw());
+            aimPoint.add(-Math.sin(yawRad) * model.getForwardOffset(), 0, Math.cos(yawRad) * model.getForwardOffset());
+        }
+        return aimPoint;
     }
 
     /**
