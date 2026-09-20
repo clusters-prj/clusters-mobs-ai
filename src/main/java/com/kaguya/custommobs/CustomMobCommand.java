@@ -176,9 +176,13 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
         Player player = requirePlayer(sender);
         if (player == null) return;
         boolean nowOn = aimDebugVisualizer.toggle(player);
-        player.sendMessage(nowOn
-                ? "§a当たり判定/狙い先のデバッグ表示を有効にしました §7(赤=本体, 青=モデルStand, 白い光点=狙い先)"
-                : "§7デバッグ表示を無効にしました");
+        if (nowOn) {
+            int nearby = aimDebugVisualizer.countNearby(player);
+            player.sendMessage("§a当たり判定/狙い先のデバッグ表示を有効にしました §7(赤=本体, 青=モデルStand, 白い光点=狙い先)");
+            player.sendMessage("§7(デバッグ) 周囲15ブロック以内の稼働中カスタムMob: " + nearby + "体");
+        } else {
+            player.sendMessage("§7デバッグ表示を無効にしました");
+        }
     }
 
     private void handleTame(CommandSender sender) {

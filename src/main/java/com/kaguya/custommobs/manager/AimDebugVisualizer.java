@@ -47,6 +47,17 @@ public class AimDebugVisualizer {
         return true;
     }
 
+    /** ONにした瞬間の切り分け用。近くに対象が何体いるかを返す(見えない原因が検出漏れか描画かを切り分ける) */
+    public int countNearby(Player player) {
+        int count = 0;
+        for (CustomMobInstance instance : mobManager.getActiveInstances()) {
+            if (!instance.getEntity().getWorld().equals(player.getWorld())) continue;
+            if (instance.getEntity().getLocation().distanceSquared(player.getLocation()) > RANGE * RANGE) continue;
+            count++;
+        }
+        return count;
+    }
+
     /** BukkitSchedulerから数tickおきに呼ばれる想定 */
     public void tick() {
         if (enabled.isEmpty()) return;
@@ -66,13 +77,13 @@ public class AimDebugVisualizer {
                 }
 
                 Location aim = mobManager.getAimPoint(instance);
-                player.spawnParticle(Particle.END_ROD, aim, 1, 0, 0, 0, 0);
+                player.spawnParticle(Particle.END_ROD, aim, 20, 0.05, 0.05, 0.05, 0.01);
             }
         }
     }
 
     private void drawBox(Player player, BoundingBox box, Color color) {
-        Particle.DustOptions options = new Particle.DustOptions(color, 1.0f);
+        Particle.DustOptions options = new Particle.DustOptions(color, 3.0f);
         double minX = box.getMinX(), minY = box.getMinY(), minZ = box.getMinZ();
         double maxX = box.getMaxX(), maxY = box.getMaxY(), maxZ = box.getMaxZ();
 
