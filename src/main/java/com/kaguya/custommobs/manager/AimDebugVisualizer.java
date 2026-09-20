@@ -58,14 +58,20 @@ public class AimDebugVisualizer {
         return count;
     }
 
+    /** 原因切り分け用の一時カウンタ。tick()が実際に描画コードへ到達しているかをチャットで確認する */
+    private long tickCount = 0;
+
     /** BukkitSchedulerから数tickおきに呼ばれる想定 */
     public void tick() {
         if (enabled.isEmpty()) return;
+        tickCount++;
 
         for (UUID uuid : enabled) {
             Player player = org.bukkit.Bukkit.getPlayer(uuid);
             if (player == null || !player.isOnline()) continue;
 
+            int drawn = 0;
+            Location lastAim = null;
             for (CustomMobInstance instance : mobManager.getActiveInstances()) {
                 if (!instance.getEntity().getWorld().equals(player.getWorld())) continue;
                 if (instance.getEntity().getLocation().distanceSquared(player.getLocation()) > RANGE * RANGE) continue;
@@ -78,6 +84,17 @@ public class AimDebugVisualizer {
 
                 Location aim = mobManager.getAimPoint(instance);
                 player.spawnParticle(Particle.END_ROD, aim, 20, 0.05, 0.05, 0.05, 0.01);
+                drawn++;
+                lastAim = aim;
+            }
+
+            // 原因切り分け用の一時ログ。tick()が実際に描画まで到達しているか・座標が
+            // おかしくないかを目で確認するため(毎tick出すとスパムになるので5回に1回)
+            if (tickCount % 5 == 0) {
+                player.sendMessage("§8[debugaim-diag] drawn=" + drawn + " aim=" + (lastAim != null
+                        ? String.format(java.util.Locale.ROOT, "%.2f,%.2f,%.2f", lastAim.getX(), lastAim.getY(), lastAim.getZ())
+                        : "none") + " myLoc=" + String.format(java.util.Locale.ROOT, "%.2f,%.2f,%.2f",
+                        player.getLocation().getX(), player.getLocation().getY(), player.getLocation().getZ()));
             }
         }
     }
