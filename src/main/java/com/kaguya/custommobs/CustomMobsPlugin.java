@@ -45,11 +45,10 @@ public class CustomMobsPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(petMenu, this);
         getServer().getPluginManager().registerEvents(new PetInfoListener(mobManager, petMenu), this);
 
+        // /particleコマンドをコンソール経由で発行する都合上、常時ONにするとコンソール/ログが
+        // コマンドの実行結果("Displaying particle...")で埋まってしまうため、常時更新はせず
+        // /cmob debugaim を打つたびに1回だけ描画するスナップショット方式にしている
         AimDebugVisualizer aimDebugVisualizer = new AimDebugVisualizer(mobManager);
-        // /particleコマンドをコンソール経由で発行する都合上、間隔を詰めすぎるとコンソール/ログが
-        // コマンド発行で埋まってしまう(CoreProtect等のコマンドロガーが全件記録するため)。
-        // デバッグ用途なので1秒間隔で十分
-        getServer().getScheduler().runTaskTimer(this, aimDebugVisualizer::tick, 1L, 20L);
 
         PluginCommand command = getCommand("cmob");
         if (command != null) {

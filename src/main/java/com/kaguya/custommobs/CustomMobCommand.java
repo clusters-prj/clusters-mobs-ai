@@ -99,7 +99,7 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage("§7 /cmob reload");
         sender.sendMessage("§7 /cmob list");
         sender.sendMessage("§7 /cmob cleanup [mobId]  §8- 読み込み済みチャンクのカスタムMobを掃除");
-        sender.sendMessage("§7 /cmob debugaim  §8- 視線判定の狙い先(y-offset/aim-forward-offset補正込み)と当たり判定箱をパーティクルで表示");
+        sender.sendMessage("§7 /cmob debugaim  §8- 視線判定の狙い先(y-offset/aim-forward-offset補正込み)と当たり判定箱をパーティクルで1回だけ表示");
         sender.sendMessage("§7 /cmob tame  §8- 視線の先のMobをテイム");
         sender.sendMessage("§7 /cmob release  §8- 視線の先の自分のペットを手放す");
         sender.sendMessage("§7 /cmob build <listingId>  §8- マーケットプレイスで購入済みの設計図で視線の先の自分のペットに建築させる");
@@ -171,17 +171,19 @@ public class CustomMobCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage("§7※ 読み込まれていないチャンクのMobは対象外です");
     }
 
-    /** 視線判定の狙い先と当たり判定箱をパーティクル表示するデバッグ用トグル(要 custommobs.command) */
+    /**
+     * 視線判定の狙い先と当たり判定箱をパーティクルで1回だけ描画するデバッグ用コマンド(要 custommobs.command)。
+     * 常時更新のトグルにすると、内部で使っている{@code /particle}コマンドの実行結果がコンソールに
+     * 流れ続けてしまうため、実行するたびに1回描画するスナップショット方式にしてある
+     */
     private void handleDebugAim(CommandSender sender) {
         Player player = requirePlayer(sender);
         if (player == null) return;
-        boolean nowOn = aimDebugVisualizer.toggle(player);
-        if (nowOn) {
-            int nearby = aimDebugVisualizer.countNearby(player);
-            player.sendMessage("§a当たり判定/狙い先のデバッグ表示を有効にしました §7(赤=本体, 青=モデルStand, 白い光点=狙い先)");
-            player.sendMessage("§7(デバッグ) 周囲15ブロック以内の稼働中カスタムMob: " + nearby + "体");
+        int drawn = aimDebugVisualizer.show(player);
+        if (drawn == 0) {
+            player.sendMessage("§e周囲15ブロック以内に稼働中のカスタムMobがいません");
         } else {
-            player.sendMessage("§7デバッグ表示を無効にしました");
+            player.sendMessage("§a" + drawn + "体分の当たり判定/狙い先を表示しました §7(赤=本体, 青=モデルStand, 白い光点=狙い先)");
         }
     }
 

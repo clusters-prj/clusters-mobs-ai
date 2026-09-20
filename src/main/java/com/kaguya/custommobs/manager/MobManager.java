@@ -528,7 +528,9 @@ public class MobManager {
     public Location getAimPoint(CustomMobInstance instance) {
         LivingEntity entity = instance.getEntity();
         ModelConfig model = instance.getDefinition().getModel();
-        double aimHeight = model != null ? model.getYOffset() + 1.0 : entity.getHeight() / 2.0;
+        double aimHeight = model != null
+                ? model.getYOffset() + 1.0 + model.getAimVerticalOffset()
+                : entity.getHeight() / 2.0;
         Location entityLoc = entity.getLocation();
         Location aimPoint = entityLoc.clone().add(0, aimHeight, 0);
         if (model != null && model.getForwardOffset() != 0.0) {

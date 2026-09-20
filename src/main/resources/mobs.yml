@@ -49,8 +49,11 @@ mobs:
       scale: 1.0
       y-offset: 1.0
       # モデルの腕を水平に回転させている影響で、見た目の中心は本体より前方にズレて見える。
-      # 実機での見え方に合わせて微調整が必要な値(モデル形状から概算しただけの初期値)
-      aim-forward-offset: 0.4
+      # /cmob debugaim で実機確認しながら調整した値(0.4→1.4: 狙い先がモデルより1ブロック
+      # 手前=後ろに出ていたため)
+      aim-forward-offset: 1.4
+      # 同じく /cmob debugaim で確認したところ狙い先がモデルより1ブロック低かったため補正
+      aim-vertical-offset: 1.0
     pet:
       tame-cost: 500
 

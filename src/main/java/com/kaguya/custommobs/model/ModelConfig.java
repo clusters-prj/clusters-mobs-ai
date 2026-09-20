@@ -17,13 +17,24 @@ public class ModelConfig {
      * 誤差が目立たないが、斜めから見ると誤差が大きく出る(要望を受けて追加)。
      */
     private final double forwardOffset;
+    /**
+     * こちらも右クリック判定の視線コーン検索専用の補正値。
+     * <p>
+     * {@code y-offset}はモデル用ArmorStandの実際の設置高さ(見た目そのもの)を決めるため、
+     * 狙い判定の都合だけでこの値をいじると見た目の位置までズレてしまう。狙い判定側だけを
+     * 追加調整したい場合はこちらを使う(実機での見え方に合わせて{@code aim-forward-offset}と
+     * 同様に微調整する想定)
+     */
+    private final double aimVerticalOffset;
 
-    public ModelConfig(Material material, int customModelData, float scale, double yOffset, double forwardOffset) {
+    public ModelConfig(Material material, int customModelData, float scale, double yOffset, double forwardOffset,
+                        double aimVerticalOffset) {
         this.material = material;
         this.customModelData = customModelData;
         this.scale = scale;
         this.yOffset = yOffset;
         this.forwardOffset = forwardOffset;
+        this.aimVerticalOffset = aimVerticalOffset;
     }
 
     public Material getMaterial() { return material; }
@@ -31,4 +42,5 @@ public class ModelConfig {
     public float getScale() { return scale; }
     public double getYOffset() { return yOffset; }
     public double getForwardOffset() { return forwardOffset; }
+    public double getAimVerticalOffset() { return aimVerticalOffset; }
 }
