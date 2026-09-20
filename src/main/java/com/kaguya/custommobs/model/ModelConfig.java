@@ -26,15 +26,23 @@ public class ModelConfig {
      * 同様に微調整する想定)
      */
     private final double aimVerticalOffset;
+    /**
+     * こちらも右クリック判定の視線コーン検索専用の補正値。
+     * <p>
+     * forward/verticalだけでは吸収できない左右方向のズレがあったため追加。正の値は
+     * エンティティの正面から見て「左」方向((-forward成分)を90度回転させた向き)にずらす
+     */
+    private final double aimLateralOffset;
 
     public ModelConfig(Material material, int customModelData, float scale, double yOffset, double forwardOffset,
-                        double aimVerticalOffset) {
+                        double aimVerticalOffset, double aimLateralOffset) {
         this.material = material;
         this.customModelData = customModelData;
         this.scale = scale;
         this.yOffset = yOffset;
         this.forwardOffset = forwardOffset;
         this.aimVerticalOffset = aimVerticalOffset;
+        this.aimLateralOffset = aimLateralOffset;
     }
 
     public Material getMaterial() { return material; }
@@ -43,4 +51,5 @@ public class ModelConfig {
     public double getYOffset() { return yOffset; }
     public double getForwardOffset() { return forwardOffset; }
     public double getAimVerticalOffset() { return aimVerticalOffset; }
+    public double getAimLateralOffset() { return aimLateralOffset; }
 }

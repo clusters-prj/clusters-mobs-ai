@@ -533,9 +533,17 @@ public class MobManager {
                 : entity.getHeight() / 2.0;
         Location entityLoc = entity.getLocation();
         Location aimPoint = entityLoc.clone().add(0, aimHeight, 0);
-        if (model != null && model.getForwardOffset() != 0.0) {
+        if (model != null && (model.getForwardOffset() != 0.0 || model.getAimLateralOffset() != 0.0)) {
             double yawRad = Math.toRadians(entityLoc.getYaw());
-            aimPoint.add(-Math.sin(yawRad) * model.getForwardOffset(), 0, Math.cos(yawRad) * model.getForwardOffset());
+            // 前方ベクトル: (-sin(yaw), cos(yaw))。左方向ベクトルはこれを90度回転させたもの
+            double forwardX = -Math.sin(yawRad);
+            double forwardZ = Math.cos(yawRad);
+            double leftX = Math.cos(yawRad);
+            double leftZ = Math.sin(yawRad);
+            aimPoint.add(
+                    forwardX * model.getForwardOffset() + leftX * model.getAimLateralOffset(),
+                    0,
+                    forwardZ * model.getForwardOffset() + leftZ * model.getAimLateralOffset());
         }
         return aimPoint;
     }

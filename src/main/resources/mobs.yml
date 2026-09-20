@@ -49,11 +49,12 @@ mobs:
       scale: 1.0
       y-offset: 1.0
       # モデルの腕を水平に回転させている影響で、見た目の中心は本体より前方にズレて見える。
-      # /cmob debugaim で実機確認しながら調整した値(0.4→1.4: 狙い先がモデルより1ブロック
-      # 手前=後ろに出ていたため)
-      aim-forward-offset: 1.4
-      # 同じく /cmob debugaim で確認したところ狙い先がモデルより1ブロック低かったため補正
-      aim-vertical-offset: 1.0
+      # /cmob debugaim で実機確認しながら調整中の値(要注意: mobs.ymlはサーバーに既にファイルが
+      # あると自動上書きされないため、この値を変えたらサーバー上の実ファイルも直接更新すること)
+      aim-forward-offset: 1.0
+      aim-vertical-offset: 0.5
+      # 前後・上下だけでは吸収できない左右方向のズレ用。正の値でエンティティの左方向にずれる
+      aim-lateral-offset: 0.1
     pet:
       tame-cost: 500
 
