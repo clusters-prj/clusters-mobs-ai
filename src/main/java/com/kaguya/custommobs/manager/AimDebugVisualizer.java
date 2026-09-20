@@ -83,7 +83,7 @@ public class AimDebugVisualizer {
                 }
 
                 Location aim = mobManager.getAimPoint(instance);
-                player.spawnParticle(Particle.END_ROD, aim, 20, 0.05, 0.05, 0.05, 0.01);
+                player.getWorld().spawnParticle(Particle.END_ROD, aim, 20, 0.05, 0.05, 0.05, 0.01);
                 drawn++;
                 lastAim = aim;
             }
@@ -128,7 +128,7 @@ public class AimDebugVisualizer {
         int steps = Math.max(1, (int) (length / STEP));
         for (int i = 0; i <= steps; i++) {
             double t = (double) i / steps;
-            player.spawnParticle(Particle.REDSTONE, x1 + dx * t, y1 + dy * t, z1 + dz * t, 1, 0, 0, 0, 0, options);
+            player.getWorld().spawnParticle(Particle.REDSTONE, x1 + dx * t, y1 + dy * t, z1 + dz * t, 1, 0, 0, 0, 0, options);
         }
     }
 }
