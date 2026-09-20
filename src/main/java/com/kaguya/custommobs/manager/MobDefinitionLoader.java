@@ -155,7 +155,8 @@ public class MobDefinitionLoader {
         int customModelData = Math.max(0, yaml.getInt(base + "model.custom-model-data", 0));
         float scale = (float) yaml.getDouble(base + "model.scale", 1.0);
         double yOffset = yaml.getDouble(base + "model.y-offset", 0.0);
-        return new ModelConfig(modelMat, customModelData, scale, yOffset);
+        double forwardOffset = yaml.getDouble(base + "model.aim-forward-offset", 0.0);
+        return new ModelConfig(modelMat, customModelData, scale, yOffset, forwardOffset);
     }
 
     private static double clamp(double value, double min, double max) {

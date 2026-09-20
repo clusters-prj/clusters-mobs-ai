@@ -488,6 +488,12 @@ public class MobManager {
      * `/cmob build`はやや離れた距離での使用が主だったため本体中心基準でも通っていたが、
      * 右クリックのような至近距離での操作では本体中心基準だと閾値をすぐ超えてしまい、
      * 見た目の中心を狙っているのに何も見つからなくなっていた。
+     * <p>
+     * 縦(y-offset)だけでなく前方(forward-offset)にもズレを補正する。モデル用ArmorStandの
+     * 右腕は-90度回転させて水平に構えさせているため、モデル自体のジオメトリの「縦方向」の
+     * 広がりはこの回転で「本体の正面方向」に変換される。正面から見ればこのズレは視線と
+     * ほぼ一直線になり誤差が目立たないが、斜めから見ると誤差が大きく出て判定が外れやすくなる
+     * (右クリックが「正面からは確実に開くが斜めからは弱い」という報告を受けて追加)。
      */
     public CustomMobInstance findNearestInView(org.bukkit.entity.Player player, double maxRange, double maxAngleDegrees) {
         Location eye = player.getEyeLocation();
@@ -501,9 +507,16 @@ public class MobManager {
 
             ModelConfig model = instance.getDefinition().getModel();
             double aimHeight = model != null ? model.getYOffset() + 1.0 : entity.getHeight() / 2.0;
-            org.bukkit.util.Vector toMob = entity.getLocation().toVector()
-                    .add(new org.bukkit.util.Vector(0, aimHeight, 0))
-                    .subtract(eye.toVector());
+            Location entityLoc = entity.getLocation();
+            org.bukkit.util.Vector aimPoint = entityLoc.toVector().add(new org.bukkit.util.Vector(0, aimHeight, 0));
+            if (model != null && model.getForwardOffset() != 0.0) {
+                double yawRad = Math.toRadians(entityLoc.getYaw());
+                aimPoint.add(new org.bukkit.util.Vector(
+                        -Math.sin(yawRad) * model.getForwardOffset(),
+                        0,
+                        Math.cos(yawRad) * model.getForwardOffset()));
+            }
+            org.bukkit.util.Vector toMob = aimPoint.subtract(eye.toVector());
             double dist = toMob.length();
             if (dist < 1.0E-4 || dist > maxRange) continue;
             if (Math.toDegrees(direction.angle(toMob)) > maxAngleDegrees) continue;

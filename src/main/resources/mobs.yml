@@ -48,6 +48,9 @@ mobs:
       custom-model-data: 1002
       scale: 1.0
       y-offset: 1.0
+      # モデルの腕を水平に回転させている影響で、見た目の中心は本体より前方にズレて見える。
+      # 実機での見え方に合わせて微調整が必要な値(モデル形状から概算しただけの初期値)
+      aim-forward-offset: 0.4
     pet:
       tame-cost: 500
 
