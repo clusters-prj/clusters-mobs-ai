@@ -34,8 +34,12 @@ public class AimDebugVisualizer {
 
     /** 表示対象を探す範囲(ブロック) */
     private static final double RANGE = 15.0;
-    /** 箱の辺に沿ってパーティクルを打つ間隔(ブロック) */
-    private static final double STEP = 0.3;
+    /**
+     * 箱の辺に沿ってパーティクルを打つ間隔(ブロック)。
+     * 1点ごとにコンソールから{@code /particle}を発行するので、細かくしすぎると
+     * コンソール/ログ(CoreProtect等のコマンドロガー)が埋まる。デバッグ用途なので粗めでよい
+     */
+    private static final double STEP = 0.5;
 
     private final MobManager mobManager;
     private final Set<UUID> enabled = new HashSet<>();
