@@ -62,7 +62,10 @@ public class PetInfoListener implements Listener {
 
         Player player = event.getPlayer();
         CustomMobInstance instance = mobManager.findNearestInView(player, RANGE, ANGLE_DEGREES);
-        if (instance == null) return;
+        if (instance == null) {
+            if (player.hasPermission("custommobs.command")) debugNearestMiss(player);
+            return;
+        }
 
         if (action == Action.RIGHT_CLICK_BLOCK) {
             Block clicked = event.getClickedBlock();
@@ -80,6 +83,24 @@ public class PetInfoListener implements Listener {
         }
 
         petMenu.open(player, instance);
+    }
+
+    /** 原因切り分け用の一時診断。見つからなかったときに近くの候補の距離/角度を表示する(管理者のみ) */
+    private void debugNearestMiss(Player player) {
+        org.bukkit.Location eye = player.getEyeLocation();
+        org.bukkit.util.Vector direction = eye.getDirection();
+        for (CustomMobInstance candidate : mobManager.getActiveInstances()) {
+            if (!candidate.getEntity().getWorld().equals(eye.getWorld())) continue;
+            org.bukkit.Location aim = mobManager.getAimPoint(candidate);
+            double dist = eye.distance(aim);
+            if (dist > RANGE * 3) continue;
+            org.bukkit.util.Vector toMob = aim.toVector().subtract(eye.toVector());
+            double angle = Math.toDegrees(direction.angle(toMob));
+            player.sendMessage(String.format(java.util.Locale.ROOT,
+                    "§8[miss] %s dist=%.2f angle=%.1f aim=%.2f,%.2f,%.2f eye=%.2f,%.2f,%.2f",
+                    candidate.getDefinition().getId(), dist, angle,
+                    aim.getX(), aim.getY(), aim.getZ(), eye.getX(), eye.getY(), eye.getZ()));
+        }
     }
 
     /** モデル用ArmorStandの箱を直接右クリックした場合。ModelStandGuardListenerが操作自体は
