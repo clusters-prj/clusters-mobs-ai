@@ -36,6 +36,13 @@ import org.bukkit.inventory.EquipmentSlot;
  * ブロック対象クリックとして送ってしまい、空振り(AIR)にならないため。ペットより明らかに
  * 手前のブロックを触ろうとしている場合はそちらを優先し、ペットの方が近ければブロック側の
  * 操作をキャンセルしてメニューを開く。
+ * <p>
+ * 既知の制約: 狙っている方向のブロック到達距離(4.5〜6ブロック程度)以内に本当に何も
+ * ブロックが無い場合、バニラクライアントは右クリックの操作パケット自体を一切送らない
+ * (腕を振るアニメーションのみ)。この場合{@code PlayerInteractEvent}すら発火しないため、
+ * ここでは検知しようがない。通常プレイ(ペットは地面近くにいる)では地面がブロックとして
+ * 拾われるため問題にならないが、開けた空中を飛行中にペットへ向けて空振りした場合などは
+ * メニューが開かないことがある(実機で確認済み)。
  */
 public class PetInfoListener implements Listener {
 
@@ -55,15 +62,6 @@ public class PetInfoListener implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
-        // 原因切り分け用の一時診断。フィルタで弾く前に無条件でイベントの中身を出す(管理者のみ)
-        if (event.getPlayer().hasPermission("custommobs.command")) {
-            event.getPlayer().sendMessage("§8[raw] action=" + event.getAction()
-                    + " hand=" + event.getHand()
-                    + " cancelled=" + event.isCancelled()
-                    + " useItem=" + event.useItemInHand()
-                    + " block=" + event.getClickedBlock());
-        }
-
         // メインハンド分だけ処理する(オフハンド分も別イベントとして発火し、二重表示になるため)
         if (event.getHand() != EquipmentSlot.HAND) return;
         Action action = event.getAction();
@@ -71,10 +69,7 @@ public class PetInfoListener implements Listener {
 
         Player player = event.getPlayer();
         CustomMobInstance instance = mobManager.findNearestInView(player, RANGE, ANGLE_DEGREES);
-        if (instance == null) {
-            if (player.hasPermission("custommobs.command")) debugNearestMiss(player);
-            return;
-        }
+        if (instance == null) return;
 
         if (action == Action.RIGHT_CLICK_BLOCK) {
             Block clicked = event.getClickedBlock();
@@ -94,32 +89,10 @@ public class PetInfoListener implements Listener {
         petMenu.open(player, instance);
     }
 
-    /** 原因切り分け用の一時診断。見つからなかったときに近くの候補の距離/角度を表示する(管理者のみ) */
-    private void debugNearestMiss(Player player) {
-        org.bukkit.Location eye = player.getEyeLocation();
-        org.bukkit.util.Vector direction = eye.getDirection();
-        for (CustomMobInstance candidate : mobManager.getActiveInstances()) {
-            if (!candidate.getEntity().getWorld().equals(eye.getWorld())) continue;
-            org.bukkit.Location aim = mobManager.getAimPoint(candidate);
-            double dist = eye.distance(aim);
-            if (dist > RANGE * 3) continue;
-            org.bukkit.util.Vector toMob = aim.toVector().subtract(eye.toVector());
-            double angle = Math.toDegrees(direction.angle(toMob));
-            player.sendMessage(String.format(java.util.Locale.ROOT,
-                    "§8[miss] %s dist=%.2f angle=%.1f aim=%.2f,%.2f,%.2f eye=%.2f,%.2f,%.2f",
-                    candidate.getDefinition().getId(), dist, angle,
-                    aim.getX(), aim.getY(), aim.getZ(), eye.getX(), eye.getY(), eye.getZ()));
-        }
-    }
-
     /** モデル用ArmorStandの箱を直接右クリックした場合。ModelStandGuardListenerが操作自体は
      * 別途キャンセルするので、ここではメニューを開くだけを行う */
     @EventHandler
     public void onManipulate(PlayerArmorStandManipulateEvent event) {
-        if (event.getPlayer().hasPermission("custommobs.command")) {
-            event.getPlayer().sendMessage("§8[raw-manip] hand=" + event.getHand()
-                    + " target=" + event.getRightClicked().getUniqueId());
-        }
         if (event.getHand() != EquipmentSlot.HAND) return;
 
         CustomMobInstance instance = mobManager.getInstance(event.getRightClicked());
@@ -132,10 +105,6 @@ public class PetInfoListener implements Listener {
      * 側で別途処理するので、二重表示を避けるためここでは除外する */
     @EventHandler
     public void onInteractEntity(PlayerInteractEntityEvent event) {
-        if (event.getPlayer().hasPermission("custommobs.command")) {
-            event.getPlayer().sendMessage("§8[raw-entity] hand=" + event.getHand()
-                    + " target=" + event.getRightClicked().getType() + " " + event.getRightClicked().getUniqueId());
-        }
         if (event.getHand() != EquipmentSlot.HAND) return;
         if (event.getRightClicked() instanceof ArmorStand) return;
 
