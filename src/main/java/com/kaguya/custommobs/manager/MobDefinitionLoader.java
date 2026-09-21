@@ -158,7 +158,10 @@ public class MobDefinitionLoader {
         double forwardOffset = yaml.getDouble(base + "model.aim-forward-offset", 0.0);
         double aimVerticalOffset = yaml.getDouble(base + "model.aim-vertical-offset", 0.0);
         double aimLateralOffset = yaml.getDouble(base + "model.aim-lateral-offset", 0.0);
-        return new ModelConfig(modelMat, customModelData, scale, yOffset, forwardOffset, aimVerticalOffset, aimLateralOffset);
+        double hitboxWidth = Math.max(0.1, yaml.getDouble(base + "model.hitbox-width", 0.8));
+        double hitboxHeight = Math.max(0.1, yaml.getDouble(base + "model.hitbox-height", 1.2));
+        return new ModelConfig(modelMat, customModelData, scale, yOffset, forwardOffset, aimVerticalOffset,
+                aimLateralOffset, hitboxWidth, hitboxHeight);
     }
 
     private static double clamp(double value, double min, double max) {

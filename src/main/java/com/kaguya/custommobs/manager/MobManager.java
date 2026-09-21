@@ -23,6 +23,7 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Interaction;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -151,6 +152,7 @@ public class MobManager {
         if (def.getModel() != null) {
             entity.setInvisible(true);
             instance.setModelStand(spawnModelStand(entity, def.getModel()));
+            instance.setInteractionHitbox(spawnInteractionHitbox(instance, def.getModel()));
         }
 
         activeMobs.put(entity.getUniqueId(), instance);
@@ -189,8 +191,11 @@ public class MobManager {
         CustomMobInstance instance = new CustomMobInstance(def, entity);
         if (def.getModel() != null) {
             entity.setInvisible(true);
-            ArmorStand existing = findOwnedStand(entity);
-            instance.setModelStand(existing != null ? existing : spawnModelStand(entity, def.getModel()));
+            ArmorStand existingStand = findOwnedStand(entity);
+            instance.setModelStand(existingStand != null ? existingStand : spawnModelStand(entity, def.getModel()));
+            Interaction existingInteraction = findOwnedInteraction(entity);
+            instance.setInteractionHitbox(existingInteraction != null
+                    ? existingInteraction : spawnInteractionHitbox(instance, def.getModel()));
         }
 
         // 所有者もPDCに永続化してあるので、拾い直しのたびに読み直す
@@ -265,11 +270,38 @@ public class MobManager {
         return stand;
     }
 
+    /**
+     * 右クリック判定専用のInteractionエンティティ(1.19.4〜)を見た目の中心(getAimPoint)に配置する。
+     * <p>
+     * バニラは「視線の先の手が届く範囲(4.5〜6ブロック程度)にブロックが一切無いと、
+     * 右クリックの操作パケット自体を送らない」ため、視線コーン検索によるRIGHT_CLICK_AIR
+     * フォールバックは空中に浮くペット(近くに足場が無い)では機能しない。Interactionは
+     * エンティティとして扱われるため、ブロックの有無に関係なく確実にクリックを拾える。
+     * 任意の幅・高さを指定できるので、見た目のモデルサイズに合わせて配置できる
+     */
+    private Interaction spawnInteractionHitbox(CustomMobInstance instance, ModelConfig model) {
+        LivingEntity base = instance.getEntity();
+        Location loc = getAimPoint(instance).subtract(0, model.getHitboxHeight() / 2.0, 0);
+        Interaction interaction = (Interaction) base.getWorld().spawnEntity(loc, EntityType.INTERACTION);
+        interaction.setInteractionWidth((float) model.getHitboxWidth());
+        interaction.setInteractionHeight((float) model.getHitboxHeight());
+        interaction.setPersistent(false);
+        interaction.setGravity(false);
+
+        PersistentDataContainer pdc = interaction.getPersistentDataContainer();
+        pdc.set(standOwnerKey, PersistentDataType.STRING, base.getUniqueId().toString());
+        String mobId = getMobId(base);
+        if (mobId != null) {
+            pdc.set(mobIdKey, PersistentDataType.STRING, mobId);
+        }
+        return interaction;
+    }
+
     /** 本体の近くにいる、自分が持ち主のモデル用Standを探す(重複していれば余りを消す) */
     private ArmorStand findOwnedStand(LivingEntity base) {
         String uuid = base.getUniqueId().toString();
         ArmorStand found = null;
-        for (Entity nearby : base.getNearbyEntities(2.0, 4.0, 2.0)) {
+        for (Entity nearby : base.getNearbyEntities(4.0, 8.0, 4.0)) {
             if (!(nearby instanceof ArmorStand stand)) continue;
             String owner = stand.getPersistentDataContainer().get(standOwnerKey, PersistentDataType.STRING);
             if (!uuid.equals(owner)) continue;
@@ -282,22 +314,48 @@ public class MobManager {
         return found;
     }
 
+    /** 本体の近くにいる、自分が持ち主のInteraction当たり判定を探す(重複していれば余りを消す) */
+    private Interaction findOwnedInteraction(LivingEntity base) {
+        String uuid = base.getUniqueId().toString();
+        Interaction found = null;
+        for (Entity nearby : base.getNearbyEntities(4.0, 8.0, 4.0)) {
+            if (!(nearby instanceof Interaction interaction)) continue;
+            String owner = interaction.getPersistentDataContainer().get(standOwnerKey, PersistentDataType.STRING);
+            if (!uuid.equals(owner)) continue;
+            if (found == null) {
+                found = interaction;
+            } else {
+                interaction.remove();
+            }
+        }
+        return found;
+    }
+
     private void syncModelStand(CustomMobInstance instance) {
         ArmorStand stand = instance.getModelStand();
-        if (stand == null || !stand.isValid()) return;
+        if (stand != null && stand.isValid()) {
+            LivingEntity entity = instance.getEntity();
+            Location loc = entity.getLocation();
+            loc.setY(loc.getY() + instance.getDefinition().getModel().getYOffset());
 
-        LivingEntity entity = instance.getEntity();
-        Location loc = entity.getLocation();
-        loc.setY(loc.getY() + instance.getDefinition().getModel().getYOffset());
-
-        // 動いていないときにテレポートパケットを撒かない
-        Location current = stand.getLocation();
-        if (current.getWorld() == loc.getWorld()
-                && current.distanceSquared(loc) < SYNC_EPSILON
-                && Math.abs(current.getYaw() - loc.getYaw()) < SYNC_EPSILON) {
-            return;
+            // 動いていないときにテレポートパケットを撒かない
+            Location current = stand.getLocation();
+            if (current.getWorld() != loc.getWorld()
+                    || current.distanceSquared(loc) >= SYNC_EPSILON
+                    || Math.abs(current.getYaw() - loc.getYaw()) >= SYNC_EPSILON) {
+                stand.teleport(loc);
+            }
         }
-        stand.teleport(loc);
+
+        Interaction interaction = instance.getInteractionHitbox();
+        if (interaction != null && interaction.isValid()) {
+            ModelConfig model = instance.getDefinition().getModel();
+            Location loc = getAimPoint(instance).subtract(0, model.getHitboxHeight() / 2.0, 0);
+            Location current = interaction.getLocation();
+            if (current.getWorld() != loc.getWorld() || current.distanceSquared(loc) >= SYNC_EPSILON) {
+                interaction.teleport(loc);
+            }
+        }
     }
 
     private void applyStats(LivingEntity entity, MobDefinition def) {
@@ -580,6 +638,9 @@ public class MobManager {
         if (instance.getModelStand() != null) {
             instance.getModelStand().remove();
         }
+        if (instance.getInteractionHitbox() != null) {
+            instance.getInteractionHitbox().remove();
+        }
 
         // 死因は問わない(通常の死亡はもちろん、/killallのようにEntityDeathEventを
         // 経由せず直接消すコマンドでも、チャンクアンロードによる無効化でも、ここは必ず通る)。
@@ -618,6 +679,10 @@ public class MobManager {
             ArmorStand stand = instance.getModelStand();
             if (stand != null && stand.isValid()) {
                 stand.remove();
+            }
+            Interaction interaction = instance.getInteractionHitbox();
+            if (interaction != null && interaction.isValid()) {
+                interaction.remove();
             }
         }
         activeMobs.clear();

@@ -49,12 +49,17 @@ mobs:
       scale: 1.0
       y-offset: 1.0
       # モデルの腕を水平に回転させている影響で、見た目の中心は本体より前方にズレて見える。
-      # /cmob debugaim で実機確認しながら調整中の値(要注意: mobs.ymlはサーバーに既にファイルが
+      # /cmob debugaim で実機確認しながら調整した値(要注意: mobs.ymlはサーバーに既にファイルが
       # あると自動上書きされないため、この値を変えたらサーバー上の実ファイルも直接更新すること)
-      aim-forward-offset: 1.0
+      aim-forward-offset: 1.1
       aim-vertical-offset: 0.5
       # 前後・上下だけでは吸収できない左右方向のズレ用。正の値でエンティティの左方向にずれる
       aim-lateral-offset: 0.1
+      # 右クリック判定専用のInteraction当たり判定(見た目の中心=上記の狙い先に配置)の幅・高さ。
+      # ブロックが近くに無いと空振り判定(RIGHT_CLICK_AIR)すら発火しないバニラの制約があり、
+      # 空中に浮くペットではそれが常時発生するため、ブロック非依存のエンティティ判定を別途持たせている
+      hitbox-width: 0.8
+      hitbox-height: 1.2
     pet:
       tame-cost: 500
 

@@ -33,9 +33,17 @@ public class ModelConfig {
      * エンティティの正面から見て「左」方向((-forward成分)を90度回転させた向き)にずらす
      */
     private final double aimLateralOffset;
+    /**
+     * 右クリック判定専用のInteractionエンティティ(見た目の中心に配置する、任意サイズの
+     * 当たり判定)の幅・高さ。ブロックが近くに無いと{@code RIGHT_CLICK_AIR}すら発火しない
+     * バニラの制約を回避するため、狙い判定の点(y-offset+aim-*-offset)を中心に
+     * このサイズの実体をエンティティとして置き、クリックを確実に拾えるようにする
+     */
+    private final double hitboxWidth;
+    private final double hitboxHeight;
 
     public ModelConfig(Material material, int customModelData, float scale, double yOffset, double forwardOffset,
-                        double aimVerticalOffset, double aimLateralOffset) {
+                        double aimVerticalOffset, double aimLateralOffset, double hitboxWidth, double hitboxHeight) {
         this.material = material;
         this.customModelData = customModelData;
         this.scale = scale;
@@ -43,6 +51,8 @@ public class ModelConfig {
         this.forwardOffset = forwardOffset;
         this.aimVerticalOffset = aimVerticalOffset;
         this.aimLateralOffset = aimLateralOffset;
+        this.hitboxWidth = hitboxWidth;
+        this.hitboxHeight = hitboxHeight;
     }
 
     public Material getMaterial() { return material; }
@@ -52,4 +62,6 @@ public class ModelConfig {
     public double getForwardOffset() { return forwardOffset; }
     public double getAimVerticalOffset() { return aimVerticalOffset; }
     public double getAimLateralOffset() { return aimLateralOffset; }
+    public double getHitboxWidth() { return hitboxWidth; }
+    public double getHitboxHeight() { return hitboxHeight; }
 }
