@@ -68,7 +68,11 @@ public class PetInfoListener implements Listener {
             Block clicked = event.getClickedBlock();
             if (clicked != null) {
                 double blockDist = player.getEyeLocation().distance(clicked.getLocation().add(0.5, 0.5, 0.5));
-                double mobDist = player.getEyeLocation().distance(instance.getEntity().getLocation());
+                // 本体の生座標ではなく、y-offset/forward-offset/aim-forward-offset等の補正込みの
+                // 狙い先(見た目の中心)で比較する。生座標のままだと、校正で狙い先を前方/上方に
+                // ずらした分だけ実態とズレて「ブロックの方が近い」と誤判定し、ブロック側を優先して
+                // メニューが開かなくなる(狙い先の方が実際は近いのに、ブロックを優先してしまう)
+                double mobDist = player.getEyeLocation().distance(mobManager.getAimPoint(instance));
                 // ブロックの方が明らかに近ければ、そちらを本当に触ろうとしている
                 if (blockDist < mobDist - 1.0) return;
             }
