@@ -55,6 +55,15 @@ public class PetInfoListener implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
+        // 原因切り分け用の一時診断。フィルタで弾く前に無条件でイベントの中身を出す(管理者のみ)
+        if (event.getPlayer().hasPermission("custommobs.command")) {
+            event.getPlayer().sendMessage("§8[raw] action=" + event.getAction()
+                    + " hand=" + event.getHand()
+                    + " cancelled=" + event.isCancelled()
+                    + " useItem=" + event.useItemInHand()
+                    + " block=" + event.getClickedBlock());
+        }
+
         // メインハンド分だけ処理する(オフハンド分も別イベントとして発火し、二重表示になるため)
         if (event.getHand() != EquipmentSlot.HAND) return;
         Action action = event.getAction();
@@ -107,6 +116,10 @@ public class PetInfoListener implements Listener {
      * 別途キャンセルするので、ここではメニューを開くだけを行う */
     @EventHandler
     public void onManipulate(PlayerArmorStandManipulateEvent event) {
+        if (event.getPlayer().hasPermission("custommobs.command")) {
+            event.getPlayer().sendMessage("§8[raw-manip] hand=" + event.getHand()
+                    + " target=" + event.getRightClicked().getUniqueId());
+        }
         if (event.getHand() != EquipmentSlot.HAND) return;
 
         CustomMobInstance instance = mobManager.getInstance(event.getRightClicked());
@@ -119,6 +132,10 @@ public class PetInfoListener implements Listener {
      * 側で別途処理するので、二重表示を避けるためここでは除外する */
     @EventHandler
     public void onInteractEntity(PlayerInteractEntityEvent event) {
+        if (event.getPlayer().hasPermission("custommobs.command")) {
+            event.getPlayer().sendMessage("§8[raw-entity] hand=" + event.getHand()
+                    + " target=" + event.getRightClicked().getType() + " " + event.getRightClicked().getUniqueId());
+        }
         if (event.getHand() != EquipmentSlot.HAND) return;
         if (event.getRightClicked() instanceof ArmorStand) return;
 
