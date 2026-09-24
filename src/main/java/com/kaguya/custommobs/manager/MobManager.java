@@ -438,6 +438,26 @@ public class MobManager {
     }
 
     /**
+     * ブロックエントリから実際に設置する{@code BlockData}を決める。
+     * <p>
+     * {@code block-data}(向き・状態込みの文字列。例: "oak_stairs[facing=north]")が
+     * 指定されていればそちらを使う。無い、あるいは壊れている場合は{@code material}だけで
+     * (向き情報なしの初期状態で)設置する。両方とも無効なら{@link IllegalArgumentException}を
+     * 投げる(呼び出し側でそのブロックをスキップする)
+     */
+    private org.bukkit.block.data.BlockData resolveBlockData(Blueprint.BlockEntry entry) {
+        String raw = entry.getBlockData();
+        if (raw != null && !raw.isBlank()) {
+            try {
+                return Bukkit.createBlockData(raw);
+            } catch (IllegalArgumentException ignored) {
+                // block-dataだけ壊れていてもmaterialで置けるようにフォールバックする
+            }
+        }
+        return Bukkit.createBlockData(Material.valueOf(entry.getMaterial()));
+    }
+
+    /**
      * 建築ジョブを1Tick分進める。mobs.ymlの静的なaiリストとは別に、
      * /cmob build コマンドで動的に割り当てられたジョブをここで直接処理する
      * (ブループリントは個体ごと・実行時に決まるためAiBehaviorレジストリには乗せない)。
@@ -460,20 +480,21 @@ public class MobManager {
         Location origin = job.getOrigin();
         Location target = origin.clone().add(entry.getX(), entry.getY(), entry.getZ());
 
-        Material material;
+        org.bukkit.block.data.BlockData data;
         try {
-            material = Material.valueOf(entry.getMaterial());
+            data = resolveBlockData(entry);
         } catch (IllegalArgumentException ex) {
             // BlueprintLoaderで弾いているはずだが、念のため
             job.advance();
             return;
         }
+        Material material = data.getMaterial();
 
         LivingEntity self = instance.getEntity();
         self.teleport(target.clone().add(0, 1, 0));
 
         Block block = target.getBlock();
-        block.setType(material);
+        block.setBlockData(data);
         target.getWorld().playSound(target, Sound.BLOCK_STONE_PLACE, 0.6f, 1.0f);
 
         UUID ownerUuid = instance.getOwnerUuid();

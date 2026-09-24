@@ -58,8 +58,8 @@ mobs:
       # 右クリック判定専用のInteraction当たり判定(見た目の中心=上記の狙い先に配置)の幅・高さ。
       # ブロックが近くに無いと空振り判定(RIGHT_CLICK_AIR)すら発火しないバニラの制約があり、
       # 空中に浮くペットではそれが常時発生するため、ブロック非依存のエンティティ判定を別途持たせている
-      hitbox-width: 0.5
-      hitbox-height: 0.8
+      hitbox-width: 0.8
+      hitbox-height: 1.2
     pet:
       tame-cost: 500
 

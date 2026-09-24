@@ -2,6 +2,7 @@ package com.kaguya.custommobs.pet;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 
 import java.util.ArrayList;
@@ -46,19 +47,42 @@ public class BlueprintLoader {
         }
     }
 
-    /** material名が不正なブロックは警告を出してスキップする(1個の誤字で設計図全体を無効にしない) */
+    /**
+     * material名(またはblockData)が不正なブロックは警告を出してスキップする
+     * (1個の誤字で設計図全体を無効にしない)。
+     * <p>
+     * blockData(向き・状態込みの文字列。例: "oak_stairs[facing=north]")が指定されていれば
+     * そちらを優先して検証する。blockDataが壊れていてもmaterialさえ有効なら
+     * materialだけでの設置にフォールバックできるよう、エントリ自体は残す
+     * (実際にどちらを使うかはMobManager#processBuildJobが決める)
+     */
     private Blueprint validate(Blueprint blueprint, String sourceLabel) {
         List<Blueprint.BlockEntry> valid = new ArrayList<>();
         for (Blueprint.BlockEntry entry : blueprint.getBlocks()) {
+            if (isValidBlockData(entry.getBlockData())) {
+                valid.add(entry);
+                continue;
+            }
             Material material = parseMaterial(entry.getMaterial());
             if (material == null) {
-                logger.warning("設計図に不正なmaterialがあるためスキップします (" + sourceLabel + "): " + entry.getMaterial());
+                logger.warning("設計図に不正なmaterial/block-dataがあるためスキップします (" + sourceLabel + "): "
+                        + entry.getMaterial() + " / " + entry.getBlockData());
                 continue;
             }
             valid.add(entry);
         }
         blueprint.getBlocks().retainAll(valid);
         return blueprint;
+    }
+
+    private boolean isValidBlockData(String raw) {
+        if (raw == null || raw.isBlank()) return false;
+        try {
+            Bukkit.createBlockData(raw);
+            return true;
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
     }
 
     private Material parseMaterial(String name) {
