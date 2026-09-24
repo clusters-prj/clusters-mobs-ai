@@ -41,7 +41,17 @@ jobs:
       - name: Locate jar
         id: jar
         run: |
-          JAR_PATH=$(find target -maxdepth 1 -name "*.jar" ! -name "*-sources.jar" | head -n 1)
+          # finalNameはpom.xmlで${project.artifactId}に固定してあるので、常にこのパスになる。
+          # 以前は `find target -name "*.jar" | head -n 1` で拾っていたが、findのディレクトリ
+          # 走査順は決定的ではなく、shade前のoriginal-custom-mobs-ai.jar(依存関係なし)を
+          # 誤って選んでしまうことがあった(実際に本番で発生: 依存関係を含まないjarが
+          # リリースされ、サーバー起動時にMariaDBドライバ等が見つからずロード不能になった)
+          JAR_PATH="target/custom-mobs-ai.jar"
+          if [ ! -f "$JAR_PATH" ]; then
+            echo "::error::期待したjarが見つかりません: $JAR_PATH"
+            ls -la target/*.jar
+            exit 1
+          fi
           echo "jar_path=${JAR_PATH}" >> "$GITHUB_OUTPUT"
           echo "jar_name=$(basename "${JAR_PATH}")" >> "$GITHUB_OUTPUT"
 
