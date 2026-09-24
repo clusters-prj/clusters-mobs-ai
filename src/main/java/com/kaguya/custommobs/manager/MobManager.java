@@ -350,6 +350,11 @@ public class MobManager {
         Interaction interaction = instance.getInteractionHitbox();
         if (interaction != null && interaction.isValid()) {
             ModelConfig model = instance.getDefinition().getModel();
+            // サイズはmobs.yml変更→reload+再起動だけで追従できるよう、位置と一緒に毎tick再適用する
+            // (spawn時に一度setしただけだと、拾い直しで既存のInteractionを再利用したときに
+            // 古いサイズのまま変わらなくなる)
+            interaction.setInteractionWidth((float) model.getHitboxWidth());
+            interaction.setInteractionHeight((float) model.getHitboxHeight());
             Location loc = getAimPoint(instance).subtract(0, model.getHitboxHeight() / 2.0, 0);
             Location current = interaction.getLocation();
             if (current.getWorld() != loc.getWorld() || current.distanceSquared(loc) >= SYNC_EPSILON) {
